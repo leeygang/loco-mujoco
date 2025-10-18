@@ -48,6 +48,24 @@ smpl = [
     "joblib"
 ]
 
+# Developer utilities (tests, linting, examples)
+dev = [
+    "pytest",
+    "flake8",
+    "wandb",
+]
+
+[tool.uv]
+# Let uv resolve dependencies and support sync installs
+managed = true
+
+[tool.uv.sources]
+# Example: pin optional groups; using PyPI by default
+
+[tool.uv.sync]
+# Default groups to sync when running `uv sync`
+default-groups = ["dev"]
+
 [project.urls]
 Homepage = "https://github.com/robfiras/loco-mujoco"
 Repository = "https://github.com/robfiras/loco-mujoco"

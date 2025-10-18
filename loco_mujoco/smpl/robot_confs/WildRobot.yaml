@@ -1,0 +1,28 @@
+site_joint_matches:
+  trunk_imu:
+    smpl_joint: "Torso"
+    equality_constraint_type: mjEQ_WELD
+    torque_scale: 0.0
+    solref: [ 0.005, 1.0 ]
+    solimp: [ 9.5e-01, 9.8e-01, 1.0e-02, 5.0e-01, 2.0e+00 ]
+  left_foot_site:
+    smpl_joint: "L_Ankle"
+    equality_constraint_type: mjEQ_WELD
+    torque_scale: 0.0
+    solref: [ 0.005, 1.0 ]
+    solimp: [ 9.5e-01, 9.8e-01, 1.0e-02, 5.0e-01, 2.0e+00 ]
+  right_foot_site:
+    smpl_joint: "R_Ankle"
+    equality_constraint_type: mjEQ_WELD
+    torque_scale: 0.0
+    solref: [ 0.005, 1.0 ]
+    solimp: [ 9.5e-01, 9.8e-01, 1.0e-02, 5.0e-01, 2.0e+00 ]
+
+# Optional initial pose tweaks for better alignment (not strictly required)
+robot_pose_modifier: []
+
+optimization_params:
+  # Small downward offset so ankle-targeted mocap sits on ground after scaling
+  z_offset_feet: -0.05
+
+env_params: {}
