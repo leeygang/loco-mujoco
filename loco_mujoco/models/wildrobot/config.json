@@ -2,7 +2,8 @@
     // NEED TO WRAP all in a body named "base" and add site 
     // <site name="imu" pos="-0.08 -0.0 0.05"/>
     // and comment the default kp frictionloss etc
-    "documentId": "ba106cac193c0e2253e1958f",
+    // "documentId": "ba106cac193c0e2253e1958f",
+    "url": "https://cad.onshape.com/documents/ba106cac193c0e2253e1958f/w/3b5db3932a544d9f939ac6a6/e/415ba7354c36d812f585c332",
     "outputFormat": "mujoco",
     "assemblyName": "TheWildRobot",
     "robot_name": "wildrobot",
