@@ -65,7 +65,6 @@ dev = [
 [tool.uv]
 # Let uv resolve dependencies and support sync installs
 managed = true
-package = false
 
 
 [tool.uv.sources]
