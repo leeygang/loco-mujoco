@@ -88,10 +88,50 @@ def add_floating_base_parent(xml_file):
     tree.write(xml_file)
 
 
+def add_common_includes(xml_file):
+    """Insert common include files as the first children of the root <mujoco>.
+
+    This ensures the following elements appear at the top of the document in order:
+      <include file="../common/scene.xml"/>
+      <include file="../common/mimic_sites.xml"/>
+
+    The function is idempotent: it will not add duplicates if they already exist.
+    """
+    tree = ET.parse(xml_file)
+    root = tree.getroot()
+
+    # Collect existing include file attributes to avoid duplicates
+    existing_files = [inc.get("file") for inc in root.findall("include")]
+
+    desired = [
+        "../common/scene.xml",
+        "../common/mimic_sites.xml",
+    ]
+
+    # Build include elements for the ones missing, preserving the required order
+    to_insert = []
+    for f in desired:
+        if f not in existing_files:
+            inc = ET.Element("include")
+            inc.set("file", f)
+            to_insert.append(inc)
+
+    if not to_insert:
+        return  # Nothing to do
+
+    # Insert as the first children of <mujoco>, but after any XML declaration; index 0
+    # If there is a comment or processing instruction first, we still insert at position 0
+    for idx, elem in enumerate(to_insert):
+        root.insert(idx, elem)
+
+    ET.indent(tree, space="  ", level=0)
+    tree.write(xml_file)
+
 
 def main() -> None:
     xml_file = "wildrobot.xml"
     print("start post process...")
+    add_common_includes(xml_file)
     add_collision_names(xml_file)
     add_floating_base_parent(xml_file)
     add_option(xml_file)
