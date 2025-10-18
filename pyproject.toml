@@ -9,7 +9,7 @@ dependencies = [
     "mujoco==3.2.7",    # todo: MjSpec API changed in 3.3.0, check why find functions are not supported anymore (no info in Mujoco changelog given)
     "mujoco-mjx==3.2.7",
     "hydra-core",
-    "jax",
+    "jax",               # CPU JAX by default. To use GPU, install the CUDA extra: jax["cuda12"]
     "flax",
     "orbax",
     "distrax",
@@ -46,6 +46,11 @@ smpl = [
     "tqdm",
     "smplx @ git+https://github.com/ZhengyiLuo/smplx",
     "joblib"
+]
+
+# Optional GPU install. Use with: `uv sync --group gpu`
+gpu = [
+    "jax[cuda12]",
 ]
 
 # Developer utilities (tests, linting, examples)
