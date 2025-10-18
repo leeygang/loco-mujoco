@@ -1,20 +1,62 @@
 site_joint_matches:
-  trunk_imu:
-    smpl_joint: "Torso"
+  pelvis_site:
+    smpl_joint: "Pelvis"
     equality_constraint_type: mjEQ_WELD
-    torque_scale: 0.0
+    torque_scale: 1.0
     solref: [ 0.005, 1.0 ]
     solimp: [ 9.5e-01, 9.8e-01, 1.0e-02, 5.0e-01, 2.0e+00 ]
-  left_foot_site:
+  chest_imu:
+    smpl_joint: "Chest"
+    equality_constraint_type: mjEQ_WELD
+    torque_scale: 0.8
+    solref: [ 0.005, 1.0 ]
+    solimp: [ 9.5e-01, 9.8e-01, 1.0e-02, 5.0e-01, 2.0e+00 ]
+  left_hip_site:
+    smpl_joint: "L_Hip"
+    equality_constraint_type: mjEQ_WELD
+    torque_scale: 0.8
+    solref: [ 0.005, 1.0 ]
+    solimp: [ 9.5e-01, 9.8e-01, 1.0e-02, 5.0e-01, 2.0e+00 ]
+  right_hip_site:
+    smpl_joint: "R_Hip"
+    equality_constraint_type: mjEQ_WELD
+    torque_scale: 0.8
+    solref: [ 0.005, 1.0 ]
+    solimp: [ 9.5e-01, 9.8e-01, 1.0e-02, 5.0e-01, 2.0e+00 ]
+  left_knee_imu:
+    smpl_joint: "L_Knee"
+    equality_constraint_type: mjEQ_WELD
+    torque_scale: 0.7
+    solref: [ 0.005, 1.0 ]
+    solimp: [ 9.5e-01, 9.8e-01, 1.0e-02, 5.0e-01, 2.0e+00 ]
+  right_knee_imu:
+    smpl_joint: "R_Knee"
+    equality_constraint_type: mjEQ_WELD
+    torque_scale: 0.7
+    solref: [ 0.005, 1.0 ]
+    solimp: [ 9.5e-01, 9.8e-01, 1.0e-02, 5.0e-01, 2.0e+00 ]
+  left_ankle_site:
     smpl_joint: "L_Ankle"
     equality_constraint_type: mjEQ_WELD
-    torque_scale: 0.0
+    torque_scale: 1.0
     solref: [ 0.005, 1.0 ]
     solimp: [ 9.5e-01, 9.8e-01, 1.0e-02, 5.0e-01, 2.0e+00 ]
-  right_foot_site:
+  right_ankle_site:
     smpl_joint: "R_Ankle"
     equality_constraint_type: mjEQ_WELD
-    torque_scale: 0.0
+    torque_scale: 1.0
+    solref: [ 0.005, 1.0 ]
+    solimp: [ 9.5e-01, 9.8e-01, 1.0e-02, 5.0e-01, 2.0e+00 ]
+  left_toe_site:
+    smpl_joint: "L_Toe"
+    equality_constraint_type: mjEQ_WELD
+    torque_scale: 0.7
+    solref: [ 0.005, 1.0 ]
+    solimp: [ 9.5e-01, 9.8e-01, 1.0e-02, 5.0e-01, 2.0e+00 ]
+  right_toe_site:
+    smpl_joint: "R_Toe"
+    equality_constraint_type: mjEQ_WELD
+    torque_scale: 0.7
     solref: [ 0.005, 1.0 ]
     solimp: [ 9.5e-01, 9.8e-01, 1.0e-02, 5.0e-01, 2.0e+00 ]
 

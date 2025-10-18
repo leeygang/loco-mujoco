@@ -16,27 +16,19 @@
     </default>
   </default>
   <sensor>
-    <gyro site="trunk_imu" name="trunk_gyro" />
-    <accelerometer site="trunk_imu" name="trunk_accelerometer" />
-    <magnetometer site="trunk_imu" name="trunk_magnetometer" />
-    <gyro site="right_leg_imu" name="right_leg_gyro" />
-    <accelerometer site="right_leg_imu" name="right_leg_accelerometer" />
-    <gyro site="left_leg_imu" name="left_leg_gyro" />
-    <accelerometer site="left_leg_imu" name="left_leg_accelerometer" />
-    <velocimeter site="trunk_imu" name="trunk_local_linvel" />
-    <framequat objtype="site" objname="trunk_imu" name="trunk_orientation" />
-    <framezaxis objtype="site" objname="trunk_imu" name="trunk_upvector" />
-    <framexaxis objtype="site" objname="trunk_imu" name="trunk_forwardvector" />
-    <framelinvel objtype="site" objname="trunk_imu" name="trunk_global_linvel" />
-    <frameangvel objtype="site" objname="trunk_imu" name="trunk_global_angvel" />
-    <framelinvel objtype="site" objname="right_leg_imu" name="right_leg_global_linvel" />
-    <frameangvel objtype="site" objname="right_leg_imu" name="right_leg_global_angvel" />
-    <framelinvel objtype="site" objname="left_leg_imu" name="left_leg_global_linvel" />
-    <frameangvel objtype="site" objname="left_leg_imu" name="left_leg_global_angvel" />
-    <framelinvel objtype="site" objname="right_foot_site" name="right_foot_site_global_linvel" />
-    <framelinvel objtype="site" objname="left_foot_site" name="left_foot_site_global_linvel" />
-    <frameangvel objtype="site" objname="left_foot_site" name="left_foot_site_global_angvel" />
-    <frameangvel objtype="site" objname="right_foot_site" name="right_foot_site_global_angvel" />
+    <!-- Use existing sites: chest_imu, left_ankle_site, right_ankle_site -->
+    <gyro site="chest_imu" name="chest_gyro" />
+    <accelerometer site="chest_imu" name="chest_accelerometer" />
+    <velocimeter site="chest_imu" name="chest_local_linvel" />
+    <framequat objtype="site" objname="chest_imu" name="chest_orientation" />
+    <framezaxis objtype="site" objname="chest_imu" name="chest_upvector" />
+    <framexaxis objtype="site" objname="chest_imu" name="chest_forwardvector" />
+    <framelinvel objtype="site" objname="chest_imu" name="chest_global_linvel" />
+    <frameangvel objtype="site" objname="chest_imu" name="chest_global_angvel" />
+    <framelinvel objtype="site" objname="right_ankle_site" name="right_ankle_global_linvel" />
+    <framelinvel objtype="site" objname="left_ankle_site" name="left_ankle_global_linvel" />
+    <frameangvel objtype="site" objname="left_ankle_site" name="left_ankle_global_angvel" />
+    <frameangvel objtype="site" objname="right_ankle_site" name="right_ankle_global_angvel" />
   </sensor>
   <default>
     <default class="lobotServo">

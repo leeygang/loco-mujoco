@@ -65,13 +65,11 @@ dev = [
 [tool.uv]
 # Let uv resolve dependencies and support sync installs
 managed = true
+package = false
+
 
 [tool.uv.sources]
 # Example: pin optional groups; using PyPI by default
-
-[tool.uv.sync]
-# Default groups to sync when running `uv sync`
-default-groups = ["dev"]
 
 [project.urls]
 Homepage = "https://github.com/robfiras/loco-mujoco"

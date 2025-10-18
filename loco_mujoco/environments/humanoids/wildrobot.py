@@ -103,12 +103,32 @@ class WildRobot(BaseRobotHumanoid):
         return "floating_base"
 
     @info_property
+    def upper_body_xml_name(self) -> str:
+        """
+        Name of the main upper-body (torso/chassis) body used for goal/trajectory components.
+        For WildRobot, use the chassis directly connected above the waist joint.
+        """
+        return "chassis"
+
+    @info_property
     def sites_for_mimic(self) -> List[str]:
         """
         Minimal set of sites for mimic/reference tracking. Ensure these exist in the XML.
         """
-        # trunk IMU and the foot sites exist in wildrobot.xml
-        return ["trunk_imu", "left_foot_site", "right_foot_site"]
+        # Use pelvis, hips, and toes to drive retargeting via equality constraints
+        # (all exist in wildrobot.xml)
+        return [
+            "pelvis_site",
+            "chest_imu",
+            "left_hip_site",
+            "right_hip_site",
+            "left_knee_imu",
+            "right_knee_imu",
+            "left_ankle_site",
+            "right_ankle_site",
+            "left_toe_site",
+            "right_toe_site",
+        ]
 
     @info_property
     def root_height_healthy_range(self) -> Tuple[float, float]:
