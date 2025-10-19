@@ -2,12 +2,12 @@
     "configuration": "default",
     "documentId": "ba106cac193c0e2253e1958f",
     "documentMicroversion": "de80c9b7839fa85635a4a224",
-    "elementId": "a21c5f674a44be82c0749694",
+    "elementId": "d71d41be4186d448be49cd1c",
     "fullConfiguration": "default",
-    "id": "Mj5KxRjXEwJ5kcBfj",
+    "id": "MwoZ2QUIZ8Oechjfr",
     "isStandardContent": false,
-    "name": "hip_servo_hook_right <1>",
-    "partId": "RCCD",
+    "name": "cell <5>",
+    "partId": "JVD",
     "suppressed": false,
     "type": "Part"
 }

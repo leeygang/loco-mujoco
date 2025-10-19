@@ -115,19 +115,15 @@ class WildRobot(BaseRobotHumanoid):
         """
         Minimal set of sites for mimic/reference tracking. Ensure these exist in the XML.
         """
-        # Use pelvis, hips, and toes to drive retargeting via equality constraints
-        # (all exist in wildrobot.xml)
         return [
-            "pelvis_site",
-            "chest_imu",
-            "left_hip_site",
-            "right_hip_site",
-            "left_knee_imu",
-            "right_knee_imu",
-            "left_ankle_site",
-            "right_ankle_site",
-            "left_toe_site",
-            "right_toe_site",
+            "pelvis_mimic",
+            "chest_mimic",
+            "left_hip_mimic",
+            "right_hip_mimic",
+            "left_knee_mimic",
+            "right_knee_mimic",
+            "left_foot_mimic",
+            "right_foot_mimic",
         ]
 
     @info_property

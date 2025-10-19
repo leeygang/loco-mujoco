@@ -2,12 +2,12 @@
     "configuration": "default",
     "documentId": "ba106cac193c0e2253e1958f",
     "documentMicroversion": "de80c9b7839fa85635a4a224",
-    "elementId": "a21c5f674a44be82c0749694",
+    "elementId": "627d986ba52042be13934915",
     "fullConfiguration": "default",
-    "id": "Mj5KxRjXEwJ5kcBfj",
+    "id": "MFCkEqOJ5S3A/9ULP",
     "isStandardContent": false,
-    "name": "hip_servo_hook_right <1>",
-    "partId": "RCCD",
+    "name": "RP_assemble <1>",
+    "partId": "JMD",
     "suppressed": false,
     "type": "Part"
 }

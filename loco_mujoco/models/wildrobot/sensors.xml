@@ -1,29 +1,14 @@
 <sensor>
     <!-- Hardware capability-->
-    <gyro site="chest_imu" name="chest_gyro"/>
-    <accelerometer site="chest_imu" name="chest_accelerometer"/>
-    <magnetometer site="chest_imu" name="chest_magnetometer"/>
-
-    <gyro site="right_knee_imu" name="right_knee_gyro"/>
-    <accelerometer site="right_knee_imu" name="right_knee_accelerometer"/>
-    <gyro site="left_knee_imu" name="left_knee_gyro"/>
-    <accelerometer site="left_knee_imu" name="left_knee_accelerometer"/>
+    <gyro site="chest_mimic" name="chest_gyro"/>
+    <accelerometer site="chest_mimic" name="chest_accelerometer"/>
+    <magnetometer site="chest_mimic" name="chest_magnetometer"/>
 
     <!-- Read from simulator -->
-    <velocimeter site="chest_imu" name="chest_local_linvel"/>
-    <framequat objtype="site" objname="chest_imu" name="chest_orientation"/>
-    <framezaxis objtype="site" objname="chest_imu" name="chest_upvector"/>
-    <framexaxis objtype="site" objname="chest_imu" name="chest_forwardvector"/>
-    <framelinvel objtype="site" objname="chest_imu" name="chest_global_linvel"/>
-    <frameangvel objtype="site" objname="chest_imu" name="chest_global_angvel"/>
-
-    <framelinvel objtype="site" objname="right_knee_imu" name="right_knee_global_linvel"/>
-    <frameangvel objtype="site" objname="right_knee_imu" name="right_knee_global_angvel" />
-    <framelinvel objtype="site" objname="left_knee_imu" name="left_knee_global_linvel"/>
-    <frameangvel objtype="site" objname="left_knee_imu" name="left_knee_global_angvel" />
-
-    <framelinvel objtype="site" objname="right_toe_site" name="right_toe_site_global_linvel"/>
-    <framelinvel objtype="site" objname="left_toe_site" name="left_toe_site_global_linvel"/>
-    <frameangvel objtype="site" objname="left_toe_site" name="left_toe_site_global_angvel"/>
-    <frameangvel objtype="site" objname="right_toe_site" name="right_toe_site_global_angvel"/>
+    <velocimeter site="chest_mimic" name="chest_local_linvel"/>
+    <framequat objtype="site" objname="chest_mimic" name="chest_orientation"/>
+    <framezaxis objtype="site" objname="chest_mimic" name="chest_upvector"/>
+    <framexaxis objtype="site" objname="chest_mimic" name="chest_forwardvector"/>
+    <framelinvel objtype="site" objname="chest_mimic" name="chest_global_linvel"/>
+    <frameangvel objtype="site" objname="chest_mimic" name="chest_global_angvel"/>
 </sensor>

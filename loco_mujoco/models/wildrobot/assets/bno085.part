@@ -2,12 +2,12 @@
     "configuration": "default",
     "documentId": "ba106cac193c0e2253e1958f",
     "documentMicroversion": "de80c9b7839fa85635a4a224",
-    "elementId": "a21c5f674a44be82c0749694",
+    "elementId": "5e8f79f3a8cdaa139b7d3521",
     "fullConfiguration": "default",
-    "id": "Mj5KxRjXEwJ5kcBfj",
+    "id": "MMF7O7YOWx2tDZc+G",
     "isStandardContent": false,
-    "name": "hip_servo_hook_right <1>",
-    "partId": "RCCD",
+    "name": "BNO085 <1>",
+    "partId": "JKD",
     "suppressed": false,
     "type": "Part"
 }
