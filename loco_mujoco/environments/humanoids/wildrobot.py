@@ -19,8 +19,8 @@ class WildRobot(BaseRobotHumanoid):
         FreeJointVel(root), JointVel for all non-root joints].
       - Actions: one entry per actuator found in the XML (DefaultControl).
 
-    Notes:
-      - The robot uses a free joint named 'floating_base' on body 'base' in the provided XML.
+        Notes:
+            - The robot uses a free joint named 'waist_freejoint' on body 'waist' in the provided XML.
       - Sites suitable for mimic/reference tracking default to trunk and feet sites.
     """
 
@@ -95,12 +95,12 @@ class WildRobot(BaseRobotHumanoid):
     @info_property
     def root_body_name(self) -> str:
         # root body in the provided XML
-        return "base"
+        return "waist"
 
     @info_property
     def root_free_joint_xml_name(self) -> str:
         # free joint name in the provided XML
-        return "floating_base"
+        return "waist_freejoint"
 
     @info_property
     def upper_body_xml_name(self) -> str:

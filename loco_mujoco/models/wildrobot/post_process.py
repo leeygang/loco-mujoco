@@ -42,7 +42,7 @@ def add_collision_names(xml_file):
     tree.write(xml_file)
 
 
-def add_floating_base_parent(xml_file):
+def ensure_root_body_pose(xml_file):
     tree = ET.parse(xml_file)
     root = tree.getroot()
     # Find the worldbody element
@@ -51,39 +51,15 @@ def add_floating_base_parent(xml_file):
         print("No worldbody found")
         return
     
-    if worldbody.find("body[@name='base']") is not None:
-        print("found base body, no need to update")
-        return
-
     # Find the waist body
     waist = worldbody.find("body[@name='waist']")
     if waist is None:
         print("No waist body found")
         return
     
-    waist_freejoint = waist.find("freejoint[@name='waist_freejoint']")
-    if waist_freejoint is None:
-        print("no waist_freejoint is found")
-    else:
-        waist.remove(waist_freejoint)
-
-    # Remove waist from worldbody
-    worldbody.remove(waist)
-    
-    # Create new base body with freejoint
-    base_body = ET.Element("body")
-    base_body.set("name", "base")
-    base_body.set("pos", "0 0 0.5")
-    
-    # Create freejoint element
-    freejoint = ET.Element("freejoint")
-    freejoint.set("name", "floating_base")
-    # Add freejoint to base body
-    base_body.append(freejoint)
-    # Add waist as child of base body
-    base_body.append(waist)
-    # Add base body to worldbody
-    worldbody.append(base_body)
+    # Ensure the root body sits at the expected pose now that the floating base wrapper is gone.
+    waist.set("pos", "0 0 0.5")
+ 
     ET.indent(tree, space="  ", level=0)
     tree.write(xml_file)
 
@@ -133,7 +109,7 @@ def main() -> None:
     print("start post process...")
     add_common_includes(xml_file)
     add_collision_names(xml_file)
-    add_floating_base_parent(xml_file)
+    ensure_root_body_pose(xml_file)
     add_option(xml_file)
     print("Post process completed")
 
