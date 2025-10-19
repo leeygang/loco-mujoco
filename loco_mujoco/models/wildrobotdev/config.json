@@ -8,7 +8,6 @@
     "assemblyName": "WildRobotDev",
     "robot_name": "WildRobotDev",
     "output_filename": "WildRobotDev",
-    "reference_connector_name": " world",
     // Simplify STL meshes (default: false)
     "simplify_stls": true,
     // "Max size of the STL files in MB (default: 3)"
@@ -51,11 +50,11 @@
         // "!foot_side*": "collision",
         "!foot_btm_*": "collision"
     },
-    "joint_properties": {
-        "default": {
-            "class": "lobotServo"
-        }
-    },
+    // "joint_properties": {
+    //     "default": {
+    //         "class": "lobotServo"
+    //     }
+    // },
     "additional_xml": [
        // "sensors.xml",
        // "joints_properties.xml"

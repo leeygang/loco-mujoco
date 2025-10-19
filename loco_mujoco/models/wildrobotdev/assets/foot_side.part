@@ -1,13 +1,13 @@
 {
     "configuration": "default",
     "documentId": "ba106cac193c0e2253e1958f",
-    "documentMicroversion": "de80c9b7839fa85635a4a224",
-    "elementId": "d71d41be4186d448be49cd1c",
+    "documentMicroversion": "6adc495d56ec46e147050133",
+    "elementId": "89ceb3190ceb802f85d40185",
     "fullConfiguration": "default",
-    "id": "MHG7bpFYyARqN0yyy",
+    "id": "Mj/ijPG2T6OMa7WRM",
     "isStandardContent": false,
-    "name": "batteryBox <1>",
-    "partId": "JHD",
+    "name": "foot_side <1>",
+    "partId": "JUH",
     "suppressed": false,
     "type": "Part"
 }
