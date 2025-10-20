@@ -1,14 +1,14 @@
 <sensor>
     <!-- Hardware capability-->
-    <gyro site="chest_mimic" name="chest_gyro"/>
-    <accelerometer site="chest_mimic" name="chest_accelerometer"/>
-    <magnetometer site="chest_mimic" name="chest_magnetometer"/>
+    <gyro site="pelvis_mimic" name="pelvis_gyro"/>
+    <accelerometer site="pelvis_mimic" name="pelvis_accelerometer"/>
+    <magnetometer site="pelvis_mimic" name="pelvis_magnetometer"/>
 
     <!-- Read from simulator -->
-    <velocimeter site="chest_mimic" name="chest_local_linvel"/>
-    <framequat objtype="site" objname="chest_mimic" name="chest_orientation"/>
-    <framezaxis objtype="site" objname="chest_mimic" name="chest_upvector"/>
-    <framexaxis objtype="site" objname="chest_mimic" name="chest_forwardvector"/>
-    <framelinvel objtype="site" objname="chest_mimic" name="chest_global_linvel"/>
-    <frameangvel objtype="site" objname="chest_mimic" name="chest_global_angvel"/>
+    <velocimeter site="pelvis_mimic" name="pelvis_local_linvel"/>
+    <framequat objtype="site" objname="pelvis_mimic" name="pelvis_orientation"/>
+    <framezaxis objtype="site" objname="pelvis_mimic" name="pelvis_upvector"/>
+    <framexaxis objtype="site" objname="pelvis_mimic" name="pelvis_forwardvector"/>
+    <framelinvel objtype="site" objname="pelvis_mimic" name="pelvis_global_linvel"/>
+    <frameangvel objtype="site" objname="pelvis_mimic" name="pelvis_global_angvel"/>
 </sensor>
