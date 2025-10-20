@@ -117,7 +117,6 @@ class WildRobot(BaseRobotHumanoid):
         """
         return [
             "pelvis_mimic",
-            "chest_mimic",
             "left_hip_mimic",
             "right_hip_mimic",
             "left_knee_mimic",
