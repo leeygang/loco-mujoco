@@ -151,6 +151,33 @@ def load_robot_conf_file(env_name: str):
     default_conf = OmegaConf.load(PATH_TO_SMPL_ROBOT_CONF / "defaults.yaml")
     robot_conf = OmegaConf.load(filepath)
     robot_conf = OmegaConf.merge(default_conf, robot_conf)
+    # If YAML explicitly provides a sites_for_mimic ordering, validate it against
+    # the environment's canonical ordering to catch accidental mismatches early.
+    yaml_sites = None
+    try:
+        if hasattr(robot_conf, 'sites_for_mimic') and robot_conf.sites_for_mimic is not None:
+            yaml_sites = list(robot_conf.sites_for_mimic)
+    except Exception:
+        yaml_sites = None
+
+    env_sites = None
+    try:
+        env_cls = LocoEnv.registered_envs[env_name]
+        # Some env classes expose sites_for_mimic as an info_property or attribute
+        if hasattr(env_cls, 'sites_for_mimic'):
+            env_sites = list(env_cls.sites_for_mimic)
+    except Exception:
+        env_sites = None
+
+    if yaml_sites is not None and env_sites is not None and yaml_sites != env_sites:
+        raise ValueError(
+            f"Mismatch between robot conf '{filename}' sites_for_mimic and environment '{env_name}' sites_for_mimic.\n"
+            f"YAML: {yaml_sites}\n"
+            f"Env : {env_sites}\n"
+            "These must match exactly. If you've changed the model XML, clear the converted AMASS cache for this"
+            " environment and re-run the shape fitting (fit_smpl_shape) so the saved optimized-shape file matches"
+            " the canonicalized model and YAML.")
+
     return robot_conf
 
 
@@ -243,6 +270,20 @@ def fit_smpl_motion(
 
     shape_new, scale, smpl2robot_pos, smpl2robot_rot_mat, offset_z, height_scale = (
         joblib.load(path_to_optimized_smpl_shape))
+
+    # Defensive check: ensure the optimized shape file contains the same number of
+    # per-site transforms as the environment's `sites_for_mimic`. If these differ,
+    # the retargeting indices will be misaligned and produce incorrect motion.
+    try:
+        n_saved_sites = np.asarray(smpl2robot_rot_mat).shape[0]
+    except Exception:
+        n_saved_sites = None
+    if n_saved_sites is not None and n_saved_sites != len(sites_for_mimic):
+        raise ValueError(
+            f"Optimized shape file '{path_to_optimized_smpl_shape}' contains transforms for {n_saved_sites} sites,"
+            f" but environment '{env_name}' defines {len(sites_for_mimic)} sites_for_mimic."
+            " Please clear the converted AMASS cache for this environment and re-run the shape fitting"
+            " (fit_smpl_shape) so the saved transforms match the canonicalized model and YAML." )
 
     skip = robot_conf.optimization_params.skip_frames if skip_steps else 1
     pose_aa = torch.from_numpy(motion_data['pose_aa'][::skip]).float()
@@ -617,6 +658,18 @@ def motion_transfer_robot_to_robot(
             logger.info(f"Found existing robot shape file at {path_to_source_robot_smpl_shape}")
         (shape_source, scale_source, smpl2robot_pos_source, smpl2robot_rot_mat_source,
          offset_z_source, height_scale_source) = joblib.load(path_to_source_robot_smpl_shape)
+
+        # Defensive check for source optimized-shape file vs env sites ordering
+        try:
+            n_saved_sites_src = np.asarray(smpl2robot_rot_mat_source).shape[0]
+        except Exception:
+            n_saved_sites_src = None
+        if n_saved_sites_src is not None and n_saved_sites_src != len(sites_for_mimic):
+            raise ValueError(
+                f"Optimized shape file '{path_to_source_robot_smpl_shape}' contains transforms for {n_saved_sites_src} sites,"
+                f" but environment '{env_name_source}' defines {len(sites_for_mimic)} sites_for_mimic."
+                " Please clear the converted AMASS cache for the source environment and re-run the shape fitting"
+                " (fit_smpl_shape) so the saved transforms match the canonicalized model and YAML." )
 
         # get the source site positions used as a target for optimization
         sites_for_mimic = env.sites_for_mimic

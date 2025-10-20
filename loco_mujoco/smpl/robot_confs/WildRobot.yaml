@@ -50,3 +50,14 @@ optimization_params:
   z_offset_feet: -0.05
 
 env_params: {}
+
+# Explicit ordering of mimic sites for clarity and to help debugging.
+# This should match the environment's `sites_for_mimic` info_property.
+sites_for_mimic:
+  - pelvis_mimic
+  - left_hip_mimic
+  - right_hip_mimic
+  - left_knee_mimic
+  - right_knee_mimic
+  - left_foot_mimic
+  - right_foot_mimic
