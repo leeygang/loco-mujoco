@@ -2,12 +2,12 @@
     "configuration": "default",
     "documentId": "ba106cac193c0e2253e1958f",
     "documentMicroversion": "3b754c6755c1d3f01525578c",
-    "elementId": "c0ece913c3564a9f34cbc816",
+    "elementId": "627d986ba52042be13934915",
     "fullConfiguration": "default",
-    "id": "MEJjQfpmDrtYAyW67",
+    "id": "MFCkEqOJ5S3A/9ULP",
     "isStandardContent": false,
-    "name": "low_leg_right <1>",
-    "partId": "RQDD",
+    "name": "RP_assemble <1>",
+    "partId": "JMD",
     "suppressed": false,
     "type": "Part"
 }
