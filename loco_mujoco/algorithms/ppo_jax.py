@@ -11,11 +11,13 @@ import jax.numpy as jnp
 from flax import struct
 import flax
 import optax
+import wandb
 
 from loco_mujoco.algorithms import (JaxRLAlgorithmBase, AgentConfBase, AgentStateBase, ActorCritic,
                                     Transition, TrainState, TrainStateBuffer, MetricHandlerTransition)
 from loco_mujoco.core.wrappers import LogWrapper, NStepWrapper, LogEnvState, VecEnv, NormalizeVecReward, SummaryMetrics
 from loco_mujoco.utils import MetricsHandler, ValidationSummary
+from loco_mujoco.core.utils import mj_jntname2qvelid, mj_jntname2qposid
 
 
 @dataclass(frozen=True)
@@ -335,6 +337,58 @@ class PPOJax(JaxRLAlgorithmBase):
                 mean_episode_length=jnp.sum(jnp.where(logged_metrics.done, logged_metrics.returned_episode_lengths, 0.0)) / jnp.sum(logged_metrics.done),
                 max_timestep=jnp.max(logged_metrics.timestep * config.num_envs),
             )
+            # Count episodes that finished within the just-collected rollout
+            episodes_finished = jnp.sum(logged_metrics.done)
+
+            # Extra live metrics: forward (x) velocity of root and policy entropy.
+            # Best-effort; failures fall back to zero without interrupting training.
+            try:
+                free_jnt_name = env.root_free_joint_xml_name
+                # access underlying mujoco model via unwrapped env
+                vel_idx = mj_jntname2qvelid(free_jnt_name, env.unwrapped()._model)[0]
+                root_forward_vel = jnp.mean(env_state.data.qvel[:, vel_idx])
+            except Exception:
+                root_forward_vel = jnp.array(0.0)
+            try:
+                pos_idx = mj_jntname2qposid(free_jnt_name, env.unwrapped()._model)[2]
+                root_height = jnp.mean(env_state.data.qpos[:, pos_idx])
+            except Exception:
+                root_height = jnp.array(0.0)
+            try:
+                y_last, _ = network.apply({'params': train_state.params,
+                                           'run_stats': train_state.run_stats},
+                                          last_obs, mutable=["run_stats"])
+                pi_last, _val_last = y_last
+                policy_entropy = pi_last.entropy().mean()
+            except Exception:
+                policy_entropy = jnp.array(0.0)
+
+            # Mean action magnitude across the just-collected batch (L1 norm)
+            try:
+                action_mag = jnp.mean(jnp.abs(traj_batch.action))
+            except Exception:
+                action_mag = jnp.array(0.0)
+
+            def _wandb_log_train(m, c, fvel, ent, amag, epfin, h):
+                try:
+                    step = int(np.asarray(m.max_timestep))
+                    interval = int(getattr(config, "live_wandb_interval", 1))
+                    if int(np.asarray(c)) % max(1, interval) != 0:
+                        return
+                    wandb.log({
+                        "Mean Episode Return": float(np.asarray(m.mean_episode_return)),
+                        "Mean Episode Length": float(np.asarray(m.mean_episode_length)),
+                        "Mean Forward Vel (x)": float(np.asarray(fvel)),
+                        "Policy Entropy": float(np.asarray(ent)),
+                        "Mean |Action|": float(np.asarray(amag)),
+                        "Episodes Finished/Update": float(np.asarray(epfin)),
+                        "Mean Root Height": float(np.asarray(h)),
+                    }, step=step)
+                except Exception:
+                    pass
+
+            if getattr(config, "live_wandb", False):
+                jax.debug.callback(_wandb_log_train, metric, counter, root_forward_vel, policy_entropy, action_mag, episodes_finished, root_height)
 
             def _evaluation_step():
 
@@ -416,12 +470,12 @@ class PPOJax(JaxRLAlgorithmBase):
 
     @classmethod
     def play_policy(cls, env,
-                    agent_conf: PPOAgentConf,
-                    agent_state: PPOAgentState,
-                    n_envs: int, n_steps=None, render=True,
-                    record=False, rng=None, deterministic=False,
-                    use_mujoco=False, wrap_env=True,
-                    train_state_seed=None):
+            agent_conf: PPOAgentConf,
+            agent_state: PPOAgentState,
+            n_envs: int, n_steps=None, render=True,
+            record=False, rng=None, deterministic=False,
+            use_mujoco=False, wrap_env=True,
+            train_state_seed=None):
 
         if use_mujoco and wrap_env:
             if hasattr(agent_conf.experiment, "len_obs_history"):

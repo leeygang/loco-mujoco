@@ -26,9 +26,15 @@ class HeightBasedTerminalStateHandler(TerminalStateHandler):
         """
         super().__init__(env, **handler_config)
 
-        self.root_height_range = self._info_props["root_height_healthy_range"]
-        self.root_free_joint_xml_ind = np.array(mj_jntname2qposid(self._info_props["root_free_joint_xml_name"],
-                                                                  env._model))
+        # Default range comes from environment info; allow overrides via handler_config
+        default_min, default_max = self._info_props["root_height_healthy_range"]
+        min_h = handler_config.get("min_height", default_min)
+        max_h = handler_config.get("max_height", default_max)
+        self.root_height_range = (min_h, max_h)
+
+        self.root_free_joint_xml_ind = np.array(
+            mj_jntname2qposid(self._info_props["root_free_joint_xml_name"], env._model)
+        )
 
     def reset(self, env: Any,
               model: Union[MjModel, Model],
@@ -120,8 +126,15 @@ class HeightBasedTerminalStateHandler(TerminalStateHandler):
             Union[bool, Any]: Whether the current state is terminal, and the carry.
 
         """
+        # MJX Data has shape (n_envs, nq); CPU Data has shape (nq,)
+        # For both CPU Mujoco and MJX, within a single env step data.qpos is 1D (nq,).
+        # Vectorization over environments is handled by vmap outside this function, so we return a scalar.
         root_pose = data.qpos[self.root_free_joint_xml_ind]
         height = root_pose[2]
-        height_cond = backend.logical_or(backend.less(height, self.root_height_range[0]),
-                                         backend.greater(height, self.root_height_range[1]))
+        if backend == jnp:
+            height_cond = jnp.logical_or(height < self.root_height_range[0],
+                                         height > self.root_height_range[1])
+        else:
+            height_cond = np.logical_or(height < self.root_height_range[0],
+                                        height > self.root_height_range[1])
         return height_cond, carry

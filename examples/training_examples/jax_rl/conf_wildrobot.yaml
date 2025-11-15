@@ -14,24 +14,31 @@ experiment:
     env_name: MjxWildRobot
     horizon: 1000
     terminal_state_type: HeightBasedTerminalStateHandler
+    terminal_state_params:
+      min_height: 0.0   # widened bounds to avoid immediate resets
+      max_height: 2.0
     goal_type: GoalRandomRootVelocity
     goal_params:
       visualize_goal: true
+      # Bias goals toward forward motion to encourage walking behavior
+      max_x_vel: 1.2      # increased forward velocity range
+      max_y_vel: 0.2      # reduce lateral wandering
+      max_yaw_vel: 0.3    # reduce excessive turning
     headless: true
     reward_type: LocomotionReward
     reward_params:
-      tracking_w_exp_xy: 4.0
+      tracking_w_exp_xy: 6.0   # stronger exponential tracking in xy
       tracking_w_exp_yaw: 4.0
-      tracking_w_sum_xy: 2.0
+      tracking_w_sum_xy: 3.5   # higher linear contribution for xy tracking
       tracking_w_sum_yaw: 1.0
       air_time_coeff: 0.1
       joint_acc_coeff: 2.0e-05
       air_time_max: 0.5
       joint_torque_coeff: 2.0e-07
       joint_position_limit_coeff: 2.0
-      action_rate_coeff: 0.1
+      action_rate_coeff: 0.02  # lower to allow more exploratory stepping
       symmetry_air_coeff: 0.005
-      energy_coeff: 5.0e-05
+      energy_coeff: 1.0e-05    # reduce early energy penalty
   hidden_layers: [512, 256]
   lr: 1e-4
   num_envs: 1024

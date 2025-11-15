@@ -63,30 +63,24 @@ def experiment(config: DictConfig):
 
         import time
         t_start = time.time()
-        # get the metrics and log them
-        if not config.experiment.debug:
+        # Skip historical metric backfill if live streaming is active to avoid non-monotonic step warnings
+        if not config.experiment.debug and not config.experiment.live_wandb:
             training_metrics = out["training_metrics"]
             validation_metrics = out["validation_metrics"]
 
-            # calculate mean across seeds
             training_metrics = jax.tree.map(lambda x: jnp.mean(jnp.atleast_2d(x), axis=0), training_metrics)
             validation_metrics = jax.tree.map(lambda x: jnp.mean(jnp.atleast_2d(x), axis=0), validation_metrics)
 
             for i in range(len(training_metrics.mean_episode_return)):
+                step_i = int(training_metrics.max_timestep[i])
                 run.log({"Mean Episode Return": training_metrics.mean_episode_return[i],
-                         "Mean Episode Length": training_metrics.mean_episode_length[i]},
-                        step=int(training_metrics.max_timestep[i]))
+                         "Mean Episode Length": training_metrics.mean_episode_length[i]}, step=step_i)
 
-                # Console progress reporting removed (use live W&B streaming instead)
-
-                if (i+1) % config.experiment.validation_interval == 0 and config.experiment.validation.active:
+                if (i + 1) % config.experiment.validation_interval == 0 and config.experiment.validation.active:
                     run.log({"Validation Info/Mean Episode Return": validation_metrics.mean_episode_return[i],
                              "Validation Info/Mean Episode Length": validation_metrics.mean_episode_length[i]},
-                            step=int(training_metrics.max_timestep[i]))
+                            step=step_i)
 
-                    # Console validation progress removed (use live W&B streaming instead)
-
-                    # log all measures
                     metrics_to_log = {}
                     for field in fields(validation_metrics):
                         attr = getattr(validation_metrics, field.name)
@@ -97,16 +91,12 @@ def experiment(config: DictConfig):
                                 attr_value = getattr(attr, attr_name)
                                 if attr_value.size > 0:
                                     metrics_to_log[f"Validation Measures/{measure_name}/{attr_name}"] = attr_value[i]
+                    run.log(metrics_to_log, step=step_i)
 
-                    run.log(metrics_to_log, step=int(training_metrics.max_timestep[i]))
-                    # Console validation measures summary removed (use live W&B streaming instead)
-
-                    # metric for used for wandb sweep (optional)
                     site_rpos = validation_metrics.euclidean_distance.site_rpos[i]
                     site_rrotvec = validation_metrics.euclidean_distance.site_rpos[i]
                     site_rvel = validation_metrics.euclidean_distance.site_rpos[i]
-                    run.log({"Metric for Sweep": site_rpos + site_rrotvec + site_rvel},
-                            step=int(training_metrics.max_timestep[i]))
+                    run.log({"Metric for Sweep": site_rpos + site_rrotvec + site_rvel}, step=step_i)
 
         print(f"Time taken to log metrics: {time.time() - t_start}s")
 
