@@ -1,63 +1,47 @@
-# Training WildRobot with JAX RL (PPO)
+# Training WildRobot with JAX RL (PPO) using uv
 
-This guide explains how to train a **WildRobot** locomotion policy using the
-JAX PPO pipeline in `examples/training_examples`.
+This guide explains how to train a **WildRobot** locomotion policy with the JAX PPO pipeline in
+`examples/training_examples` using **uv** exclusively (fast resolver, reproducible lockfiles).
 
-It assumes:
-- You have installed LocoMuJoCo in editable mode.
-- You are using **uv** for dependency management (pip alternatives are also shown).
+Assumptions:
+* You are in the project root.
+* You will use only `uv` commands (no `pip` alternatives).
+* GPU training is optional and enabled via the `gpu` dependency group.
 
 ---
 
 ## 1. Environment and dependencies
 
-### 1.1. Base installation (uv)
-
-From the repository root:
+### 1.1 Base installation
 
 ```bash
 uv sync
 ```
 
-This uses `pyproject.toml` to create/sync the base environment with:
-- MuJoCo / MJX
-- JAX, Flax, Orbax
-- PPOJax and utilities
+Resolves the base environment (MuJoCo, MJX, JAX, Flax, PPO utilities).
 
-If you prefer `pip` instead of `uv`, you can do:
-
-```bash
-pip install -e .
-```
-
-### 1.2. Optional NVIDIA CUDA support
-
-If you want to train WildRobot on GPU with CUDA JAX, and you have configured
-`gpu` as a dependency group / extra in `pyproject.toml`, run:
+### 1.2 Optional GPU (CUDA JAX)
 
 ```bash
 uv sync --group gpu
 ```
 
-or, with pip extras (if configured):
+Verify devices:
 
 ```bash
-pip install -e ".[gpu]"
+uv run python -c "import jax; print(jax.devices())"
 ```
 
-Then verify that JAX sees your GPU:
+Expect at least one `GpuDevice` if CUDA is active.
+
+### 1.3 Optional dev / SMPL groups (not needed for pure RL)
 
 ```bash
-python -c "import jax; print(jax.devices())"
+uv sync --group dev
+uv sync --group smpl
 ```
 
-You should see at least one `GpuDevice` in the printed list.
-
-> Note: Make sure your CUDA / driver stack matches the JAX CUDA wheels. See the
-> JAX installation docs if you encounter version or compatibility errors.
-
-SMPL/AMASS are **not required** for pure RL training; WildRobot is used here as a
-standard RL environment.
+SMPL/AMASS assets are not required for standard WildRobot PPO training.
 
 ---
 
@@ -87,60 +71,46 @@ parallel environments, or PPO hyperparameters.
 
 ## 3. Training entrypoint
 
-WildRobot RL training uses the **generic JAX RL experiment script** with a
-WildRobot-specific config:
+Hydra-driven experiment script + WildRobot config:
+* Script: `examples/training_examples/jax_rl/experiment.py`
+* Config: `examples/training_examples/jax_rl/conf_wildrobot.yaml`
 
-- Script: `examples/training_examples/jax_rl/experiment.py`
-- Config: `examples/training_examples/jax_rl/conf_wildrobot.yaml`
-
-You do **not** need a separate Python wrapper; Hydra will load the
-WildRobot config directly via the command line.
+No wrapper needed.
 
 ---
 
-## 4. How to launch training
+## 4. Launch training
 
-From the repository root, run the experiment script with the
-WildRobot config name:
-
-```bash
-cd examples/training_examples/jax_rl
-uv run experiment.py --config-name conf_wildrobot
-```
-
-If you are using `pip` instead of `uv`:
+From the project root:
 
 ```bash
-cd examples/training_examples/jax_rl
-python experiment.py --config-name conf_wildrobot
+uv run examples/training_examples/jax_rl/experiment.py --config-name conf_wildrobot
 ```
 
-What happens during training:
-
-- A `MjxWildRobot` environment is created via `RLFactory`.
-- PPOJax builds and JIT-compiles the training function.
-- Training runs for `total_timesteps` as defined in `conf_wildrobot.yaml`.
-- Metrics are logged to Weights & Biases (WandB) under the project name
-  specified in the config (default: `wildrobot-rl`).
-- At the end of training, the agent state is saved and a rollout is recorded
-  as a video using `PPOJax.play_policy`.
-
-Make sure you are logged into WandB before starting training:
+Authenticate WandB (optional but recommended for live charts):
 
 ```bash
-wandb login
+export WANDB_API_KEY=YOUR_API_KEY
+export WANDB_MODE=online    # or offline
+uv run wandb login
 ```
 
-If you want to temporarily disable WandB, you can either:
-- Set `experiment.debug: true` in `conf_wildrobot.yaml`, or
-- Edit the base `jax_rl/experiment.py` to skip WandB init/logging.
+During startup the script prints:
+* `[Hydra] output_dir: ...`
+* `[WandB] run.dir: ...` -> contains `files/wandb-history.jsonl` (live metrics file).
+
+Pipeline overview:
+1. `MjxWildRobot` env via `RLFactory`.
+2. PPOJax builds & JIT-compiles fused training loop.
+3. Host callbacks stream metrics if enabled.
+4. Agent saved (`PPOJax_saved.pkl`).
+5. Final rollout recorded as a video artifact.
 
 ---
 
-## 5. Common tweaks
+## 5. Common tweaks & monitoring
 
-You can customize WildRobot RL behavior by editing
-`examples/training_examples/jax_rl/conf_wildrobot.yaml`.
+Edit `examples/training_examples/jax_rl/conf_wildrobot.yaml`.
 
 ### 5.1. Training scale and speed
 
@@ -164,46 +134,77 @@ Under `experiment.env_params.reward_params` you can adjust:
 
 These weights will influence gait stability, energy usage, and style.
 
-### 5.3. PPO hyperparameters
+### 5.3 PPO hyperparameters
 
-You can also tune:
+Tune:
+* `hidden_layers` (model capacity)
+* `lr` (learning rate)
+* `clip_eps`, `num_minibatches`, `update_epochs` (stability trade-offs)
 
-- `hidden_layers`: network size (e.g., `[256, 256]` for a smaller model).
-- `lr`: learning rate (e.g., `3e-4` for faster learning but potentially less
-  stable).
-- `clip_eps`, `num_minibatches`, `update_epochs`: PPO-specific stability knobs.
+### 5.4 Live progress & WandB streaming
+
+Flags:
+* `live_wandb: true` – enable in-loop streaming via `jax.debug.callback`.
+* `live_wandb_interval: 5` – log every N PPO updates.
+* `debug: true` – verbose per-episode prints (noisy; default false).
+
+Examples:
+```bash
+# Log every update with a smaller test run
+uv run examples/training_examples/jax_rl/experiment.py \
+  --config-name conf_wildrobot \
+  experiment.live_wandb_interval=1 \
+  experiment.total_timesteps=1000000
+
+# Disable live streaming (only final aggregation)
+uv run examples/training_examples/jax_rl/experiment.py \
+  --config-name conf_wildrobot \
+  experiment.live_wandb=false
+```
+
+### 5.5 Tail logs locally
+
+Use printed `run.dir` path:
+```bash
+tail -f RUN_DIR/files/wandb-history.jsonl | grep -E 'Mean Episode Return|Mean Episode Length'
+```
+
+Pretty-print (requires jq):
+```bash
+tail -f RUN_DIR/files/wandb-history.jsonl | jq '{_step, "Mean Episode Return", "Mean Episode Length"}'
+```
+
+Offline mode & later sync:
+```bash
+export WANDB_MODE=offline
+uv run examples/training_examples/jax_rl/experiment.py --config-name conf_wildrobot
+uv run wandb sync RUN_DIR
+```
 
 ---
 
 ## 6. Sanity checks
 
-Before launching long runs, it is useful to check:
+1. Devices:
+```bash
+uv run python -c "import jax; print(jax.devices())"
+```
 
-1. **Device setup**
+2. Quick test run:
+```bash
+uv run examples/training_examples/jax_rl/experiment.py \
+  --config-name conf_wildrobot \
+  experiment.total_timesteps=1000000 \
+  experiment.num_envs=128 \
+  experiment.live_wandb_interval=1
+```
 
-   ```bash
-   python -c "import jax; print(jax.devices())"
-   ```
+3. Streaming confirmation: open W&B URL or tail history file.
 
-   Confirm that the expected CPU/GPU devices are listed.
+4. Final video: verify forward locomotion stability.
 
-2. **Short debug run**
+After PPO convergence, explore imitation variants (`jax_rl_mimic`, `jax_amp`, `jax_gail`).
 
-   In `conf_wildrobot.yaml`, you can temporarily reduce:
+---
 
-   - `total_timesteps` (e.g., `1e6`)
-   - `num_envs` (e.g., `128`)
-
-   and/or set `experiment.debug: true` to verify everything runs end-to-end
-   before committing to a long training run.
-
-3. **WandB logging**
-
-   Check that metrics (e.g., mean episode return, episode length) appear in
-   your WandB project and that the logged video at the end plays back a
-   reasonable WildRobot motion.
-
-With this setup, you have a clean starting point for training WildRobot with
-pure RL. Once this is working, you can extend to imitation-based methods
-(`jax_rl_mimic`, `jax_amp`, `jax_gail`) using WildRobot and your AMASS
-pipelines.
+Happy training! Adjust `live_wandb_interval` upward to reduce logging overhead on massive runs.

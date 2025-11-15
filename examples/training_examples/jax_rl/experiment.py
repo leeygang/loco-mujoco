@@ -28,6 +28,13 @@ def experiment(config: DictConfig):
         wandb.login()
         config_dict = OmegaConf.to_container(config, resolve=True, throw_on_missing=True)
         run = wandb.init(project=config.wandb.project, config=config_dict)
+        # Print paths so users can locate W&B logs during the run
+        try:
+            print(f"[Hydra] output_dir: {result_dir}")
+            # run.dir points to the specific W&B run folder that contains files/wandb-history.jsonl
+            print(f"[WandB] run.dir: {getattr(run, 'dir', 'N/A')}")
+        except Exception:
+            pass
 
         # get task factory
         factory = TaskFactory.get_factory_cls(config.experiment.task_factory.name)
@@ -70,27 +77,14 @@ def experiment(config: DictConfig):
                          "Mean Episode Length": training_metrics.mean_episode_length[i]},
                         step=int(training_metrics.max_timestep[i]))
 
-                # Optional console progress reporting
-                if getattr(config.experiment, "console_progress", False):
-                    print(
-                        f"[Progress] step={int(training_metrics.max_timestep[i])} "
-                        f"return={float(training_metrics.mean_episode_return[i]):.3f} "
-                        f"length={float(training_metrics.mean_episode_length[i]):.1f}",
-                        flush=True,
-                    )
+                # Console progress reporting removed (use live W&B streaming instead)
 
                 if (i+1) % config.experiment.validation_interval == 0 and config.experiment.validation.active:
                     run.log({"Validation Info/Mean Episode Return": validation_metrics.mean_episode_return[i],
                              "Validation Info/Mean Episode Length": validation_metrics.mean_episode_length[i]},
                             step=int(training_metrics.max_timestep[i]))
 
-                    if getattr(config.experiment, "console_progress", False):
-                        print(
-                            f"[Validation] step={int(training_metrics.max_timestep[i])} "
-                            f"val_return={float(validation_metrics.mean_episode_return[i]):.3f} "
-                            f"val_length={float(validation_metrics.mean_episode_length[i]):.1f}",
-                            flush=True,
-                        )
+                    # Console validation progress removed (use live W&B streaming instead)
 
                     # log all measures
                     metrics_to_log = {}
@@ -105,18 +99,7 @@ def experiment(config: DictConfig):
                                     metrics_to_log[f"Validation Measures/{measure_name}/{attr_name}"] = attr_value[i]
 
                     run.log(metrics_to_log, step=int(training_metrics.max_timestep[i]))
-                    if getattr(config.experiment, "console_progress", False):
-                        # Print a compact summary of additional validation measures (only scalars)
-                        extra_measures = []
-                        for k, v in metrics_to_log.items():
-                            if isinstance(v, (int, float)):
-                                extra_measures.append(f"{k.split('/')[-1]}={float(v):.3f}")
-                        if extra_measures:
-                            print(
-                                f"[Validation Measures] step={int(training_metrics.max_timestep[i])} "
-                                + ", ".join(extra_measures[:6]) + (" ..." if len(extra_measures) > 6 else ""),
-                                flush=True,
-                            )
+                    # Console validation measures summary removed (use live W&B streaming instead)
 
                     # metric for used for wandb sweep (optional)
                     site_rpos = validation_metrics.euclidean_distance.site_rpos[i]

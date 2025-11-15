@@ -55,9 +55,7 @@ experiment:
   # Live W&B streaming (host callbacks from inside JIT)
   live_wandb: true
   live_wandb_interval: 5   # log every N PPO updates
-  # When true, experiment.py will print progress to the console while logging to WandB after training.
-  # Note: Because the full training loop is JIT-compiled, mid-loop streaming is not available without refactoring.
-  console_progress: true
+  # Note: training loop is JIT-compiled; live streaming is implemented via host callbacks.
   n_seeds: 1
   vmap_across_seeds: true
   validation:
