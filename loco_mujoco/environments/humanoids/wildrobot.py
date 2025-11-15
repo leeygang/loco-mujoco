@@ -130,6 +130,25 @@ class WildRobot(BaseRobotHumanoid):
         # coarse range; adjust as needed for your robot's size
         return (0.15, 0.7)
 
+
+    @info_property
+    def foot_geom_names(self) -> List[str]:
+        """
+        Geoms used to detect ground contact for the locomotion reward.
+
+        Provide four geoms ordered as two pairs so the default symmetry/air-time logic works:
+        - [0], [1] -> left foot (front, back)
+        - [2], [3] -> right foot (front, back)
+
+        Names must match the `geom name="..."` entries in wildrobot.xml.
+        """
+        return [
+            "left_foot_btm_front",
+            "left_foot_btm_back",
+            "right_foot_btm_front",
+            "right_foot_btm_back",
+        ]
+
     def _modify_spec_for_mjx(self, spec: MjSpec) -> MjSpec:
         # Overridden in MjxWildRobot; keep default behavior here
         return spec
