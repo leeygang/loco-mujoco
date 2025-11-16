@@ -62,6 +62,28 @@ print(f"   - Observation container keys: {list(env.obs_container.keys())}")
 print(f"   - Root body name: {env.root_body_name}")
 print(f"   - Root height healthy range: {env.root_height_healthy_range}")
 
+print(f"\n2b. Checking actuator control ranges (THIS IS THE LIKELY ISSUE):")
+import mujoco
+model = env._model
+for i in range(model.nu):
+    act_name = mujoco.mj_id2name(model, mujoco.mjtObj.mjOBJ_ACTUATOR, i)
+    is_limited = model.actuator_ctrllimited[i]
+    if is_limited:
+        ctrl_range = model.actuator_ctrlrange[i]
+        print(f"   - Actuator {i} ({act_name}): ctrlrange = [{ctrl_range[0]:.4f}, {ctrl_range[1]:.4f}]")
+    else:
+        print(f"   - Actuator {i} ({act_name}): ctrlrange = UNLIMITED (inf/-inf) ⚠️  THIS CAUSES NaN!")
+
+    # Also check joint ranges for reference
+    jnt_id = model.actuator_trnid[i, 0]
+    if jnt_id >= 0:
+        jnt_name = mujoco.mj_id2name(model, mujoco.mjtObj.mjOBJ_JOINT, jnt_id)
+        if model.jnt_limited[jnt_id]:
+            jnt_range = model.jnt_range[jnt_id]
+            print(f"        (corresponding joint '{jnt_name}' range: [{jnt_range[0]:.4f}, {jnt_range[1]:.4f}])")
+        else:
+            print(f"        (corresponding joint '{jnt_name}' range: unlimited)")
+
 print(f"\n3. Testing single environment reset...")
 key = jax.random.PRNGKey(0)
 try:
