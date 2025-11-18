@@ -17,13 +17,16 @@ experiment:
     terminal_state_params:
       min_height: 0.0   # widened bounds to avoid immediate resets
       max_height: 2.0
-    goal_type: GoalRandomRootVelocity
+    goal_type: GoalForwardRootVelocity
     goal_params:
       visualize_goal: true
-      # Bias goals toward forward motion to encourage walking behavior
-      max_x_vel: 1.2      # increased forward velocity range
-      max_y_vel: 0.2      # reduce lateral wandering
-      max_yaw_vel: 0.3    # reduce excessive turning
+      # Forward-only locomotion - no backward walking!
+      min_x_vel: 0.8      # Minimum forward velocity
+      max_x_vel: 2.0      # Maximum forward velocity (increased for faster walking)
+      min_y_vel: -0.2     # Reduce lateral wandering
+      max_y_vel: 0.2
+      min_yaw_vel: -0.3   # Reduce excessive turning
+      max_yaw_vel: 0.3
     headless: true
     reward_type: LocomotionReward
     reward_params:
@@ -51,7 +54,7 @@ experiment:
   clip_eps: 0.2
   init_std: 0.8
   learnable_std: true
-  ent_coef: 0.0
+  ent_coef: 0.01    # Enable exploration for better gait discovery
   vf_coef: 0.5
   max_grad_norm: 0.5
   activation: tanh

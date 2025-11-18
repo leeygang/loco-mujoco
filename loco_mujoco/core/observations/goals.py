@@ -429,6 +429,81 @@ class GoalRandomRootVelocity(Goal, RootVelocityArrowVisualizer):
         return 3
 
 
+class GoalForwardRootVelocity(GoalRandomRootVelocity):
+    """
+    A class representing a forward-only root velocity goal.
+
+    This class defines a goal that specifies random velocities for the root body,
+    but ensures the x-direction velocity is always forward (positive).
+
+    Args:
+        info_props (Dict): Information properties required for initialization.
+        min_x_vel (float): Minimum velocity in the x direction (default: 0.5 for forward motion).
+        max_x_vel (float): Maximum velocity in the x direction (default: 1.5).
+        min_y_vel (float): Minimum velocity in the y direction (default: -0.2).
+        max_y_vel (float): Maximum velocity in the y direction (default: 0.2).
+        min_yaw_vel (float): Minimum yaw velocity (default: -0.3).
+        max_yaw_vel (float): Maximum yaw velocity (default: 0.3).
+        **kwargs: Additional keyword arguments.
+    """
+
+    def __init__(self,
+                 info_props: Dict,
+                 min_x_vel: float = 0.5,
+                 max_x_vel: float = 1.5,
+                 min_y_vel: float = -0.2,
+                 max_y_vel: float = 0.2,
+                 min_yaw_vel: float = -0.3,
+                 max_yaw_vel: float = 0.3,
+                 **kwargs):
+
+        # Store min/max bounds for all directions
+        self.min_x_vel = min_x_vel
+        self.min_y_vel = min_y_vel
+        self.min_yaw_vel = min_yaw_vel
+
+        # Call parent init with max values
+        super().__init__(info_props, max_x_vel=max_x_vel, max_y_vel=max_y_vel, max_yaw_vel=max_yaw_vel, **kwargs)
+
+    def reset_state(self,
+                    env: Any,
+                    model: Union[MjModel, Model],
+                    data: Union[MjData, Data],
+                    carry: Any,
+                    backend: ModuleType) -> Tuple[Union[MjData, Any], Any]:
+        """
+        Reset the goal state with random forward velocities.
+
+        Args:
+            env (Any): The environment instance.
+            model (Union[MjModel, Any]): The Mujoco model.
+            data (Union[MjData, Any]): The Mujoco data.
+            carry (Any): Carry object.
+            backend (ModuleType): The backend (numpy or jax).
+
+        Returns:
+            Tuple[Union[MjData, Any], Any]: Updated data and carry.
+        """
+        key = carry.key
+        if backend == np:
+            goal_vel = np.random.uniform(
+                [self.min_x_vel, self.min_y_vel, self.min_yaw_vel],
+                [self.max_x_vel, self.max_y_vel, self.max_yaw_vel]
+            )
+        else:
+            key, subkey = jax.random.split(key)
+            goal_vel = jax.random.uniform(
+                subkey,
+                shape=(3,),
+                minval=jnp.array([self.min_x_vel, self.min_y_vel, self.min_yaw_vel]),
+                maxval=jnp.array([self.max_x_vel, self.max_y_vel, self.max_yaw_vel])
+            )
+
+        goal_state = GoalRandomRootVelocityState(goal_vel[0], goal_vel[1], goal_vel[2])
+        observation_states = carry.observation_states.replace(**{self.name: goal_state})
+        return data, carry.replace(key=key, observation_states=observation_states)
+
+
 @struct.dataclass
 class GoalTrajRootVelocityState:
     """

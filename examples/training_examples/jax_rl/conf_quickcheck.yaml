@@ -20,11 +20,14 @@ experiment:
       # Widen bounds to avoid immediate resets on first step
       min_height: 0.0
       max_height: 2.0
-    goal_type: GoalRandomRootVelocity
+    goal_type: GoalForwardRootVelocity
     goal_params:
       visualize_goal: true
-      max_x_vel: 1.2
+      min_x_vel: 0.8     # Minimum forward velocity (no backward motion!)
+      max_x_vel: 2.0     # Maximum forward velocity (increased from 1.2 for faster walking)
+      min_y_vel: -0.2    # Sideways motion range
       max_y_vel: 0.2
+      min_yaw_vel: -0.3  # Rotation range
       max_yaw_vel: 0.3
     headless: true
     reward_type: LocomotionReward
@@ -45,7 +48,7 @@ experiment:
   lr: 1e-4
   num_envs: 512
   num_steps: 64
-  total_timesteps: 1e6        # ~30 updates at these settings; finishes quickly
+  total_timesteps: 5e6        # Increased from 1e6 for better convergence (~150 updates)
   update_epochs: 2            # speed up
   num_minibatches: 32
   gamma: 0.99
@@ -53,7 +56,7 @@ experiment:
   clip_eps: 0.2
   init_std: 0.8
   learnable_std: true
-  ent_coef: 0.0               # consider 0.01 if exploration seems low
+  ent_coef: 0.01              # Enable exploration (was 0.0)
   vf_coef: 0.5
   max_grad_norm: 0.5
   activation: tanh
