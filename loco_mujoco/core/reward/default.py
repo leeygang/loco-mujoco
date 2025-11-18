@@ -132,6 +132,9 @@ class TargetVelocityGoalReward(Reward):
 
         """
 
+        # Call parent init first to set up _info_props
+        super().__init__(env, **kwargs)
+
         self._free_jnt_name = self._info_props["root_free_joint_xml_name"]
         self._vel_idx = np.array(mj_jntname2qvelid(self._free_jnt_name, env._model))
         self._w_exp_xy = tracking_w_exp_xy
@@ -148,8 +151,6 @@ class TargetVelocityGoalReward(Reward):
 
         assert self._goal_name is not None, \
             f"GoalRandomRootVelocity or GoalForwardRootVelocity is required for {self.__class__.__name__}"
-
-        super().__init__(env, **kwargs)
 
     def __call__(self,
                  state: Union[np.ndarray, jnp.ndarray],
