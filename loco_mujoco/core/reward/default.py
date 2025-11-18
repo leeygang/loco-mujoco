@@ -132,8 +132,6 @@ class TargetVelocityGoalReward(Reward):
 
         """
 
-        super().__init__(env, **kwargs)
-
         self._free_jnt_name = self._info_props["root_free_joint_xml_name"]
         self._vel_idx = np.array(mj_jntname2qvelid(self._free_jnt_name, env._model))
         self._w_exp_xy = tracking_w_exp_xy
@@ -141,9 +139,15 @@ class TargetVelocityGoalReward(Reward):
         self._w_sum_xy = tracking_w_sum_xy
         self._w_sum_yaw = tracking_w_sum_yaw
 
-        # find the goal velocity observation
-        assert "GoalRandomRootVelocity" in env.obs_container, \
-            f"GoalRandomRootVelocity is the required goal for the reward for{self.__class__.__name__}"
+        # Find the goal velocity observation (support both GoalRandomRootVelocity and GoalForwardRootVelocity)
+        self._goal_name = None
+        for goal_type in ["GoalForwardRootVelocity", "GoalRandomRootVelocity"]:
+            if goal_type in env.obs_container:
+                self._goal_name = goal_type
+                break
+
+        assert self._goal_name is not None, \
+            f"GoalRandomRootVelocity or GoalForwardRootVelocity is required for {self.__class__.__name__}"
 
         super().__init__(env, **kwargs)
 
@@ -182,7 +186,7 @@ class TargetVelocityGoalReward(Reward):
         else:
             R = jnp_R
 
-        goal_state = getattr(carry.observation_states, "GoalRandomRootVelocity")
+        goal_state = getattr(carry.observation_states, self._goal_name)
 
         # get root orientation
         root_jnt_id = mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_JOINT, self._free_jnt_name)
