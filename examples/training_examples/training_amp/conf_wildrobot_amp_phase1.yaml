@@ -1,141 +1,64 @@
-# WildRobot AMP Training - Phase 1: Human-like Walking
-# This config trains the robot to walk with human-like motion using AMP
+defaults:
+  - override hydra/job_logging: default
+  - override hydra/launcher: basic
 
-# Environment
-env_name: "MjxWildRobot"
+wandb:
+  project: "wildrobot-amp-phase1"
 
-# Observation specification for AMP
-observation_specification:
-  # === STUDENT OBSERVATIONS (noisy, for real robot deployment) ===
-  - type: "IMUSensor"
-    obs_name: "chest_imu"
-    sensor_names: ["chest_imu_gyro", "chest_imu_accel", "chest_imu_mag"]
-    group: "student"
+experiment:
+  task_factory:
+    name: ImitationFactory
+    params:
+      # Dataset configuration - will auto-download from HuggingFace
+      default_dataset_conf:
+        datasets: ["walk", "run"]
 
-  - type: "IMUSensor"
-    obs_name: "left_knee_imu"
-    sensor_names: ["left_knee_imu_gyro", "left_knee_imu_accel"]
-    group: "student"
+  env_params:
+    env_name: MjxWildRobot
+    horizon: 600
+    headless: true
 
-  - type: "IMUSensor"
-    obs_name: "right_knee_imu"
-    sensor_names: ["right_knee_imu_gyro", "right_knee_imu_accel"]
-    group: "student"
+    # Goal and reward for AMP
+    goal_type: GoalTrajMimic
+    goal_params: {}
 
-  - type: "JointPosArray"
-    obs_name: "joint_pos"
-    xml_names: [
-      "right_hip_pitch", "right_hip_roll", "right_knee_pitch",
-      "right_ankle_pitch", "right_foot_roll",
-      "left_hip_pitch", "left_hip_roll", "left_knee_pitch",
-      "left_ankle_pitch", "left_foot_roll",
-      "waist_yaw"
-    ]
-    group: "student"
+    reward_type: AMPReward
+    reward_params:
+      task_reward_weight: 0.5
+      style_reward_weight: 0.5
 
-  - type: "JointVelArray"
-    obs_name: "joint_vel"
-    xml_names: [
-      "right_hip_pitch", "right_hip_roll", "right_knee_pitch",
-      "right_ankle_pitch", "right_foot_roll",
-      "left_hip_pitch", "left_hip_roll", "left_knee_pitch",
-      "left_ankle_pitch", "left_foot_roll",
-      "waist_yaw"
-    ]
-    group: "student"
+    # Terminal state
+    terminal_state_type: HeightBasedTerminalStateHandler
+    terminal_state_params:
+      min_height: 0.0
+      max_height: 2.0
 
-  # === TEACHER OBSERVATIONS (perfect, for discriminator) ===
-  - type: "RelativeSiteQuantaties"
-    obs_name: "mimic_obs"
-    group: "teacher"
-
-  - type: "ProjectedGravityVector"
-    obs_name: "gravity"
-    xml_name: "waist_freejoint"
-    group: "teacher"
-
-  # === COMMON OBSERVATIONS ===
-  - type: "GoalTrajMimic"
-    obs_name: "goal"
-
-  - type: "LastAction"
-    obs_name: "last_action"
-
-# Datasets - Load mocap for human-like motion
-default_dataset_conf:
-  datasets: ["walk", "run"]  # Basic walking and running motions
-
-# You can also add LAFAN1 dataset for more variety:
-# lafan1_dataset_conf:
-#   datasets: ["walk1_subject1", "walk2_subject1", "run1_subject1"]
-
-# Reward and goal
-reward_type: "AMPReward"  # AMP-style reward (task + style)
-goal_type: "GoalTrajMimic"  # Follow trajectory velocities
-
-# AMP-specific reward configuration
-amp_reward:
-  task_reward_weight: 0.5    # Weight for task reward (reach goal)
-  style_reward_weight: 0.5   # Weight for style reward (look human)
-  discriminator_replay_buffer_size: 100000
-
-# Training parameters
-num_envs: 2048      # Parallel environments (GPU)
-horizon: 600        # Max steps per episode
-num_updates: 5000   # Phase 1: Learn basic motions
-
-# AMP hyperparameters
-amp:
+  # Training hyperparameters
+  hidden_layers: [256, 256]
+  lr: 3e-4
+  num_envs: 2048
+  num_steps: 20
+  total_timesteps: 3e6
+  update_epochs: 4
   num_minibatches: 16
-  num_epochs: 4
   gamma: 0.99
   gae_lambda: 0.95
-  clip_coef: 0.2
+  clip_eps: 0.2
+  init_std: 0.8
+  learnable_std: true
   ent_coef: 0.01
   vf_coef: 0.5
   max_grad_norm: 1.0
-  normalize_advantages: true
-
-  # Discriminator settings
-  discriminator_hidden_layer_sizes: [256, 256]
-  discriminator_learning_rate: 1e-4
-  discriminator_batch_size: 512
-
-# Agent network
-agent:
-  init_std: 0.8
-  actor_hidden_layer_sizes: [256, 256]
-  critic_hidden_layer_sizes: [256, 256]
-  activation: "tanh"
-
-# Learning rate
-learning_rate: 3e-4
-anneal_lr: true
-
-# Logging
-track: true
-wandb_project_name: "wildrobot-amp-phase1"
-exp_name: "wildrobot_amp_humanlike_walking"
-
-# Video recording
-video:
-  record: true
-  n_steps: 200
-  n_envs: 10
-
-# Validation
-validation:
-  num: 1
-  interval: 100
-
-# Checkpoint saving
-save_checkpoints: true
-checkpoint_interval: 500
-
-# Notes
-notes: |
-  Phase 1: Learning human-like walking with AMP
-  - Uses mocap data for natural motion
-  - Noisy IMU sensors for sim-to-real
-  - Discriminator ensures human-like style
-  - Goal: Natural walking/running gaits
+  activation: tanh
+  anneal_lr: true
+  normalize_env: true
+  debug: false
+  live_wandb: true
+  live_wandb_interval: 10
+  n_seeds: 1
+  vmap_across_seeds: false
+  validation:
+    active: true
+    num_steps: 200
+    num_envs: 10
+    num: 1
