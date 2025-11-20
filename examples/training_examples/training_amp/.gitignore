@@ -1,0 +1,33 @@
+# Training outputs
+outputs/
+wandb/
+*.pkl
+*.log
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Temporary files
+*.tmp
+*.bak
+*~
+
+# Videos and images
+*.mp4
+*.avi
+*.png
+*.jpg
+*.gif
