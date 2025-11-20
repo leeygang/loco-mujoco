@@ -15,7 +15,7 @@ experiment:
           - "KIT/3/walking_slow08_poses"
           - "KIT/3/walking_medium03_poses"
           - "KIT/3/walking_fast02_poses"
-          - "KIT/10/running_fast01_poses"
+          - "KIT/3/walking_run03_poses"
 
   env_params:
     env_name: MjxWildRobot
