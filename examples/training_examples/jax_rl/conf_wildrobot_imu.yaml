@@ -1,0 +1,106 @@
+# Training configuration for WildRobot with IMU sensors
+# This config shows how to train using physical IMU sensor data
+
+# Environment
+env_name: "MjxWildRobot"  # Use MJX for GPU acceleration
+
+# Observation specification with IMU sensors
+observation_specification:
+  - type: "JointPosArray"
+    obs_name: "joint_pos"
+    xml_names: [
+      "right_hip_pitch", "right_hip_roll", "right_knee_pitch",
+      "right_ankle_pitch", "right_foot_roll",
+      "left_hip_pitch", "left_hip_roll", "left_knee_pitch",
+      "left_ankle_pitch", "left_foot_roll",
+      "waist_yaw"
+    ]
+
+  - type: "JointVelArray"
+    obs_name: "joint_vel"
+    xml_names: [
+      "right_hip_pitch", "right_hip_roll", "right_knee_pitch",
+      "right_ankle_pitch", "right_foot_roll",
+      "left_hip_pitch", "left_hip_roll", "left_knee_pitch",
+      "left_ankle_pitch", "left_foot_roll",
+      "waist_yaw"
+    ]
+
+  # Physical IMU sensors (matching real robot hardware)
+  - type: "IMUSensor"
+    obs_name: "chest_imu"
+    sensor_names: ["chest_imu_gyro", "chest_imu_accel", "chest_imu_mag"]
+
+  - type: "IMUSensor"
+    obs_name: "left_knee_imu"
+    sensor_names: ["left_knee_imu_gyro", "left_knee_imu_accel"]
+
+  - type: "IMUSensor"
+    obs_name: "right_knee_imu"
+    sensor_names: ["right_knee_imu_gyro", "right_knee_imu_accel"]
+
+  # Additional orientation info
+  - type: "ProjectedGravityVector"
+    obs_name: "gravity"
+    xml_name: "waist_freejoint"
+
+  # Last action for temporal context
+  - type: "LastAction"
+    obs_name: "last_action"
+
+# Reward and goal
+reward_type: "LocomotionReward"
+goal_type: "GoalRandomRootVelocity"
+
+# Goal configuration
+goal_configuration:
+  min_height: 0.0
+  max_height: 2.0
+  min_forward_vel: 0.0
+  max_forward_vel: 3.0
+  min_lateral_vel: -0.5
+  max_lateral_vel: 0.5
+
+# Training parameters
+num_envs: 2048  # Parallel environments (GPU)
+horizon: 600    # Max steps per episode
+num_updates: 1000
+
+# PPO hyperparameters
+ppo:
+  num_minibatches: 16
+  num_epochs: 4
+  gamma: 0.99
+  gae_lambda: 0.95
+  clip_coef: 0.2
+  ent_coef: 0.0
+  vf_coef: 0.5
+  max_grad_norm: 1.0
+  normalize_advantages: true
+
+# Agent network
+agent:
+  init_std: 0.8
+  actor_hidden_layer_sizes: [256, 256]
+  critic_hidden_layer_sizes: [256, 256]
+  activation: "tanh"
+
+# Learning rate
+learning_rate: 3e-4
+anneal_lr: true
+
+# Logging
+track: true
+wandb_project_name: "wildrobot-imu-training"
+exp_name: "wildrobot_imu_ppo"
+
+# Video recording
+video:
+  record: true
+  n_steps: 200
+  n_envs: 10
+
+# Validation
+validation:
+  num: 1
+  interval: 50
