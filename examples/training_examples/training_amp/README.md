@@ -1,204 +1,356 @@
-# WildRobot AMP Training
+# WildRobot AMP Training Guide
 
-This directory contains everything needed to train WildRobot with AMP (Adversarial Motion Priors) for human-like motion and command following.
+Complete guide to train WildRobot with AMP (Adversarial Motion Priors) for human-like locomotion.
 
-## Directory Structure
+---
 
-```
-training_amp/
-├── wildrobot_extensions/      # Custom observations, goals, etc.
-│   ├── __init__.py
-│   ├── observations.py        # IMUSensor, AllIMUSensors
-│   └── README.md
-├── experiment.py              # Main training script
-├── eval.py                    # Evaluation script
-├── conf_wildrobot_amp_phase1.yaml  # Phase 1 config
-├── QUICKSTART_AMP_TRAINING.md # Quick start guide
-├── WILDROBOT_TRAINING_STRATEGY.md  # Complete strategy
-└── README.md                  # This file
-```
+## Table of Contents
 
-## Quick Start
+1. [Overview](#overview)
+2. [Setup AMASS (One-Time, 45-60 min)](#setup-amass-one-time-45-60-min)
+3. [Training](#training)
+4. [Evaluation](#evaluation)
+5. [Troubleshooting](#troubleshooting)
 
-### 1. Download Mocap Datasets
+---
+
+## Overview
+
+**Goal:** Train WildRobot to walk/run with human-like motion using AMP algorithm.
+
+**Dataset:** WildRobot requires AMASS motion capture data with SMPL-H retargeting.
+
+**Time:**
+- Setup: 45-60 minutes (one-time)
+- First training: 10-15 minutes (retargeting) + training time
+- Subsequent training: Uses cached data, starts immediately
+
+---
+
+## Setup AMASS (One-Time, 45-60 min)
+
+### Step 1: Automated Setup (5 min)
 
 ```bash
-cd /Users/ygli/projects/loco-mujoco
-loco-mujoco-download
+cd /Users/ygli/projects/loco-mujoco/examples/training_examples/training_amp
+./setup_amass.sh
 ```
 
-### 2. Test Training (Quick)
+This installs:
+- PyTorch CPU (avoids JAX conflicts)
+- SMPL dependencies (using `uv pip install`)
+- Creates directories: `~/smpl`, `~/amass`, `~/amass_converted`
+
+### Step 2: Download SMPL-H Models (10-15 min)
+
+**Required for motion retargeting.**
+
+1. Visit: https://mano.is.tue.mpg.de/download.php
+2. Register (free for academic/research, requires email verification)
+3. Download:
+   - ✅ **Extended SMPL+H model** (body model)
+   - ✅ **Models & Code** (hand models)
+4. Extract both to `~/smpl/`
+5. Verify:
+   ```bash
+   ls ~/smpl/SMPLH_MALE.pkl ~/smpl/SMPLH_FEMALE.pkl
+   ```
+
+### Step 3: Download AMASS Datasets (15-30 min)
+
+**Human motion capture data.**
+
+1. Visit: https://amass.is.tue.mpg.de/
+2. Register (free for academic/research)
+3. Download (select **SMPL-H G** version):
+   - ✅ **KIT** (~500 MB) - **Required** - Good variety of locomotion
+   - ⭐ **CMU** (~2 GB) - Recommended - Large motion variety
+   - ⭐ **BMLrub** (~300 MB) - Recommended - Clean locomotion
+4. Extract to `~/amass/`
+5. Verify:
+   ```bash
+   ls ~/amass/KIT/3/
+   # Should see: walking_slow08_poses.npz, walking_fast01_poses.npz, etc.
+   ```
+
+### Step 4: Generate SMPL-H Neutral Model (5 min)
+
+**Combines body + hand models into one file.**
+
+```bash
+cd /Users/ygli/projects/loco-mujoco/loco_mujoco/smpl
+chmod u+x install_smplh.sh
+./install_smplh.sh
+```
+
+This script:
+- Creates conda environment
+- Generates `SMPLH_NEUTRAL.pkl`
+- Cleans up
+
+Verify:
+```bash
+ls ~/smpl/models/SMPLH_NEUTRAL.pkl
+```
+
+### Step 5: Verify Setup (Optional, 2 min)
+
+Test SMPL replay with UnitreeH1:
+
+```bash
+cd /Users/ygli/projects/loco-mujoco/examples/replay_datasets
+uv run python smpl_example.py
+```
+
+If this runs without errors, your SMPL setup is correct!
+
+---
+
+## Training
+
+### Quick Test (First Run - Includes Retargeting)
 
 ```bash
 cd /Users/ygli/projects/loco-mujoco/examples/training_examples/training_amp
 
-# Quick test (100 updates, ~10 minutes)
-python experiment.py \
-  --config-name=conf_wildrobot_amp_phase1 \
-  num_updates=100
+uv run python experiment.py \
+  --config-name=conf_wildrobot_amp_amass \
+  experiment.total_timesteps=200000 \
+  wandb.project=wildrobot-test
 ```
 
-### 3. Full Training
+**Note:** Use `uv run python` to ensure dependencies are properly resolved. You can also use `python` directly if you're already in the uv environment.
+
+**What happens on first run:**
+
+1. **Shape fitting** (~2-3 min):
+   - Fits SMPL-H body shape to WildRobot proportions
+   - Saves: `~/amass_converted/WildRobot/shape_optimized.pkl`
+
+2. **Motion retargeting** (~1-2 min per sequence):
+   - Retargets each AMASS motion to WildRobot
+   - Saves: `~/amass_converted/WildRobot/KIT_3_walking_slow08_poses.npz`, etc.
+
+3. **Training** (~2 min for 200k timesteps):
+   - Learns human-like walking motion
+
+**Subsequent runs:** Uses cached files, starts training immediately!
+
+### Full Training
 
 ```bash
-# Full Phase 1 training (5000 updates, 2-3 days on RTX 3080)
-python experiment.py --config-name=conf_wildrobot_amp_phase1
+uv run python experiment.py --config-name=conf_wildrobot_amp_amass
 ```
 
-### 4. Evaluate
+**Training settings** (see `conf_wildrobot_amp_amass.yaml`):
+- **Datasets:** KIT walking (slow/medium/fast) + running
+- **Total timesteps:** 3 million (~20-30 min on RTX 3080)
+- **Environments:** 2048 parallel
+- **Discriminator:** Learns to distinguish robot from human motion
+- **Reward:** 50% task (velocity tracking) + 50% style (human-like)
 
-```bash
-# After training completes
-python eval.py --path outputs/[timestamp]/AMPJax_saved.pkl
-```
+**Progress tracking:**
+- Watch WandB: Discriminator outputs, episode returns, validation metrics
+- Live logging every 10 updates
+- Video recorded at end
 
-## Training Phases
+### Add More Motions
 
-### Phase 1: Human-like Walking (Current)
-- **Goal:** Learn natural walking/running from mocap
-- **Duration:** 2-3 days
-- **Config:** `conf_wildrobot_amp_phase1.yaml`
-- **Output:** Natural motion policy
-
-### Phase 2: Command Following (Next)
-- **Goal:** Add discrete commands (stop, walk, turn)
-- **Duration:** 1-2 days
-- **Config:** TBD (will create after Phase 1)
-- **Output:** Command-following policy
-
-### Phase 3: Fall Recovery
-- **Goal:** Stand up after falling
-- **Duration:** 2-3 days
-- **Config:** TBD
-- **Output:** Robust recovery policy
-
-### Phase 4: Sim-to-Real
-- **Goal:** Deploy to physical WildRobot
-- **Duration:** 1-2 weeks
-- **Output:** Working robot! 🤖
-
-## Custom Extensions
-
-This project uses external extensions (not in loco-mujoco library):
-
-### Custom Observations
-- **IMUSensor** - Read from physical BNO085/ICM45686 sensors
-- **AllIMUSensors** - Read all IMU sensors automatically
-
-Located in: `wildrobot_extensions/observations.py`
-
-### Future Extensions
-- Custom goals for commands (Phase 2)
-- Custom initial states for fall recovery (Phase 3)
-- Domain randomizers for sim-to-real (Phase 4)
-
-## Configuration
-
-### Key Parameters in Phase 1 Config
+Edit `conf_wildrobot_amp_amass.yaml`:
 
 ```yaml
-# Environment
-env_name: "MjxWildRobot"        # GPU-accelerated
-
-# Training
-num_envs: 2048                   # Parallel environments
-num_updates: 5000                # Total updates (~2-3 days)
-
-# AMP
-amp_reward:
-  task_reward_weight: 0.5        # Follow goal velocity
-  style_reward_weight: 0.5       # Look human-like
-
-# Datasets
-default_dataset_conf:
-  datasets: ["walk", "run"]      # Mocap data
+experiment:
+  task_factory:
+    params:
+      amass_dataset_conf:
+        rel_dataset_path:
+          - "KIT/3/walking_slow08_poses"
+          - "KIT/3/walking_fast01_poses"
+          - "KIT/10/running_fast01_poses"
+          - "CMU/01/01_01_poses"          # Add CMU motions
+          - "BMLrub/0007/walking1_poses"  # Add BMLrub
 ```
 
-## Sensor Configuration
-
-Physical IMU sensors have **realistic noise** for sim-to-real:
-
-- **chest_imu** (BNO085): noise=0.0002 rad/s
-- **knee_imu** (ICM45686): noise=0.00005 rad/s
-
-Mimic site sensors remain **perfect** for discriminator.
-
-## Monitoring Training
-
-Training logs to WandB:
-```
-Project: wildrobot-amp-phase1
-Experiment: wildrobot_amp_humanlike_walking
-```
-
-Watch these metrics:
-- **Mean Episode Return**: Should increase (target: >500)
-- **Mean Episode Length**: Should increase (target: ~600)
-- **Style Reward**: Discriminator score (target: >0.8)
-- **Task Reward**: Goal following (target: >0.7)
-
-## Outputs
-
-Training saves to:
-```
-training_amp/outputs/
-└── [timestamp]_wildrobot_amp_humanlike_walking/
-    ├── AMPJax_saved.pkl          # Trained policy
-    ├── config.yaml                # Training config
-    ├── metrics.json               # Training metrics
-    └── videos/                    # Evaluation videos
-```
-
-## Troubleshooting
-
-### Import Error: wildrobot_extensions
-
-The training scripts automatically add the current directory to Python path:
-```python
-import sys
-from pathlib import Path
-sys.path.insert(0, str(Path(__file__).parent))
-```
-
-### Dataset Not Found
-
-```bash
-# Download datasets
-loco-mujoco-download
-
-# Or set cache path
-export LOCOMUJOCO_CONVERTED_DEFAULT_PATH="$HOME/.loco-mujoco-caches"
-```
-
-### Out of Memory
-
-```bash
-# Reduce parallel environments
-python experiment.py \
-  --config-name=conf_wildrobot_amp_phase1 \
-  num_envs=1024  # Instead of 2048
-```
-
-## Documentation
-
-- **QUICKSTART_AMP_TRAINING.md** - Step-by-step quick start
-- **WILDROBOT_TRAINING_STRATEGY.md** - Complete 4-phase strategy
-- **wildrobot_extensions/README.md** - Custom extensions guide
-
-## Next Steps
-
-1. ✅ Download datasets (`loco-mujoco-download`)
-2. ✅ Run quick test (100 updates)
-3. ⏳ Start Phase 1 training (5000 updates)
-4. ⏳ Evaluate and iterate
-5. ⏳ Move to Phase 2 (commands)
-
-## References
-
-- **AMP Paper:** https://arxiv.org/abs/2104.02180
-- **loco-mujoco Docs:** https://loco-mujoco.readthedocs.io/
-- **MuJoCo MJX:** https://mujoco.readthedocs.io/en/stable/mjx.html
+Then re-run training - new sequences will be retargeted and cached.
 
 ---
 
-**Status:** Phase 1 - Ready to start training! 🚀
+## Evaluation
+
+### Replay Trained Policy
+
+```bash
+cd /Users/ygli/projects/loco-mujoco/examples/training_examples/training_amp
+
+uv run python eval.py --path outputs/[timestamp]/AMPJax_saved.pkl
+```
+
+This will:
+- Load trained policy
+- Run 200 steps with 20 parallel environments
+- Record video
+- Show human-like walking motion
+
+### Test on WildRobot Environment
+
+```python
+from loco_mujoco.algorithms import AMPJax
+from loco_mujoco import RLFactory
+
+# Load trained agent
+agent_conf, agent_state = AMPJax.load_agent("path/to/AMPJax_saved.pkl")
+
+# Create WildRobot environment (for visualization/deployment)
+env = RLFactory.make(
+    "WildRobot",  # CPU version for visualization
+    reward_type="LocomotionReward",
+    goal_type="GoalRandomRootVelocity"
+)
+
+# Play policy
+AMPJax.play_policy(env, agent_conf, agent_state,
+                   deterministic=True, n_steps=200, record=True)
+```
+
+---
+
+## Troubleshooting
+
+### Motion looks wrong (walking backwards, twisted)
+
+**Solution:** Clean retargeting cache and regenerate
+
+```bash
+uv run python -m loco_mujoco.models.wildrobot.clean_amass_cache --all
+cd examples/training_examples/training_amp
+uv run python experiment.py --config-name=conf_wildrobot_amp_amass
+```
+
+### "AMASS path not set" error
+
+**Solution:** Reconfigure paths
+
+```bash
+loco-mujoco-set-amass-path --path ~/amass
+loco-mujoco-set-smpl-model-path --path ~/smpl
+loco-mujoco-set-conv-amass-path --path ~/amass_converted
+```
+
+### "SMPLH_NEUTRAL.pkl not found"
+
+**Solution:** Regenerate neutral model
+
+```bash
+cd loco_mujoco/smpl
+./install_smplh.sh
+ls ~/smpl/models/SMPLH_NEUTRAL.pkl  # Verify
+```
+
+### "Dataset not found: KIT/3/walking_slow08_poses.npz"
+
+**Solution:** Check AMASS download
+
+```bash
+ls ~/amass/KIT/3/
+# Should show .npz files
+```
+
+If missing, re-download KIT dataset from https://amass.is.tue.mpg.de/
+
+### GPU not detected
+
+```bash
+uv run python -c "import jax; print(jax.devices())"
+# Should show: [cuda(id=0)] or [gpu(id=0)]
+```
+
+If CPU only, install GPU JAX:
+```bash
+uv pip install jax[cuda12]
+```
+
+---
+
+## Configuration Files
+
+- **`conf_wildrobot_amp_amass.yaml`** - AMASS training config (production)
+- **`conf_wildrobot_amp_phase1.yaml`** - UnitreeH1 config (for testing pipeline only)
+
+---
+
+## Directory Structure After Setup
+
+```
+~/smpl/
+├── models/SMPLH_NEUTRAL.pkl       ← Generated neutral model
+├── SMPLH_MALE.pkl                 ← Downloaded
+└── SMPLH_FEMALE.pkl               ← Downloaded
+
+~/amass/
+├── KIT/                           ← Downloaded AMASS data
+│   ├── 3/walking_slow08_poses.npz
+│   ├── 3/walking_fast01_poses.npz
+│   └── 10/running_fast01_poses.npz
+├── CMU/...
+└── BMLrub/...
+
+~/amass_converted/
+└── WildRobot/
+    ├── shape_optimized.pkl        ← Fitted WildRobot shape
+    ├── KIT_3_walking_slow08_poses.npz  ← Retargeted motion
+    ├── KIT_3_walking_fast01_poses.npz
+    └── KIT_10_running_fast01_poses.npz
+
+training_amp/
+├── conf_wildrobot_amp_amass.yaml  ← Main config
+├── experiment.py                  ← Training script
+├── eval.py                        ← Evaluation script
+├── setup_amass.sh                 ← Setup script
+└── outputs/                       ← Training results
+    └── [timestamp]/
+        ├── AMPJax_saved.pkl       ← Trained policy
+        └── config.yaml            ← Training config snapshot
+```
+
+---
+
+## Next Steps
+
+After Phase 1 training (human-like walking):
+
+1. **Phase 2:** Add command conditioning (stop, walk slow/fast, turn)
+2. **Phase 3:** Add fall recovery
+3. **Phase 4:** Sim-to-real transfer to physical WildRobot
+
+See `WILDROBOT_TRAINING_STRATEGY.md` for the complete 4-phase roadmap.
+
+---
+
+## Quick Reference Commands
+
+```bash
+# Setup (one-time)
+cd training_amp && ./setup_amass.sh
+
+# Download SMPL-H + AMASS manually, then:
+cd /Users/ygli/projects/loco-mujoco/loco_mujoco/smpl
+./install_smplh.sh
+
+# Quick test
+cd /Users/ygli/projects/loco-mujoco/examples/training_examples/training_amp
+uv run python experiment.py --config-name=conf_wildrobot_amp_amass \
+  experiment.total_timesteps=200000
+
+# Full training
+uv run python experiment.py --config-name=conf_wildrobot_amp_amass
+
+# Evaluate
+uv run python eval.py --path outputs/[timestamp]/AMPJax_saved.pkl
+
+# Clean cache (if motion looks wrong)
+uv run python -m loco_mujoco.models.wildrobot.clean_amass_cache --all
+```
+
+---
+
+**Ready to start?** Run `./setup_amass.sh` to begin! 🚀
