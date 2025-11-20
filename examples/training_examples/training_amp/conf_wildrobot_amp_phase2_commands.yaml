@@ -3,7 +3,7 @@ defaults:
   - override hydra/launcher: basic
 
 wandb:
-  project: "wildrobot-amp-amass"
+  project: "wildrobot-amp-phase2-commands"
 
 # Top-level learning rates (accessed by optimizer)
 lr: 3e-4
@@ -13,9 +13,14 @@ experiment:
   task_factory:
     name: ImitationFactory
     params:
-      # AMASS datasets - will be retargeted to WildRobot on first run
+      # AMASS datasets - include standing/idle for commands
       amass_dataset_conf:
         rel_dataset_path:
+          # Standing/idle (for "stop" command)
+          # Note: Check if you have these, otherwise use balancing motions
+          - "KIT/3/balancing01_poses"  # Can act as standing
+          # - "KIT/3/standing01_poses"  # Uncomment if you have this
+
           # Walking at different speeds
           - "KIT/3/walking_slow08_poses"
           - "KIT/3/walking_medium03_poses"
@@ -26,23 +31,23 @@ experiment:
           - "KIT/3/turn_left01_poses"
           - "KIT/3/turn_right01_poses"
 
-          # Optional: Add more variety
-          # - "KIT/3/turn_left05_poses"
-          # - "KIT/3/turn_right05_poses"
-
   env_params:
     env_name: MjxWildRobot
-    horizon: 600
+    horizon: 1000  # Longer episodes for command following
     headless: true
 
-    # Goal and reward for AMP
-    goal_type: GoalTrajRootVelocity
+    # PHASE 2 CHANGE: Command-based goal instead of trajectory following
+    goal_type: GoalRandomRootVelocity  # Random velocity commands
     goal_params:
-      visualize_goal: false
+      # Command velocity ranges (will sample from these)
+      forward_velocity_range: [0.0, 2.0]   # 0=stop, 2.0=fast
+      lateral_velocity_range: [0.0, 0.0]   # No lateral movement
+      angular_velocity_range: [-0.5, 0.5]  # -0.5=turn right, +0.5=turn left
 
-    reward_type: TargetVelocityTrajReward
+    reward_type: TargetVelocityGoalReward  # Track commanded velocity
     reward_params:
-      w_exp: 10.0
+      tracking_w_exp_xy: 10.0
+      tracking_w_exp_yaw: 10.0
 
     # Terminal state
     terminal_state_type: HeightBasedTerminalStateHandler
@@ -56,7 +61,7 @@ experiment:
   disc_lr: 5e-5
   num_envs: 2048
   num_steps: 20
-  total_timesteps: 3e6
+  total_timesteps: 5e6  # More timesteps for command learning
   update_epochs: 4
   disc_minibatch_size: 2048
   proportion_env_reward: 0.5
