@@ -1,6 +1,6 @@
 # WildRobot AMP Training Guide
 
-Complete guide to train WildRobot with AMP (Adversarial Motion Priors) for human-like locomotion.
+Complete guide to train WildRobot with AMP (Adversarial Motion Priors) for human-like locomotion using AMASS motion capture data.
 
 ---
 
@@ -18,7 +18,7 @@ Complete guide to train WildRobot with AMP (Adversarial Motion Priors) for human
 
 **Goal:** Train WildRobot to walk/run with human-like motion using AMP algorithm.
 
-**Dataset:** WildRobot requires AMASS motion capture data with SMPL-H retargeting.
+**Dataset:** AMASS motion capture data with SMPL-H retargeting to WildRobot.
 
 **Time:**
 - Setup: 45-60 minutes (one-time)
@@ -271,10 +271,20 @@ uv pip install jax[cuda12]
 
 ---
 
-## Configuration Files
+## Configuration
 
-- **`conf_wildrobot_amp_amass.yaml`** - AMASS training config (production)
-- **`conf_wildrobot_amp_phase1.yaml`** - UnitreeH1 config (for testing pipeline only)
+**Config file:** `conf_wildrobot_amp_amass.yaml`
+
+This contains all training hyperparameters:
+- AMASS dataset paths
+- WildRobot environment settings
+- AMP discriminator settings
+- PPO training parameters
+
+Edit this file to:
+- Add more motion sequences
+- Adjust hyperparameters
+- Change WandB project name
 
 ---
 
@@ -302,7 +312,7 @@ uv pip install jax[cuda12]
     └── KIT_10_running_fast01_poses.npz
 
 training_amp/
-├── conf_wildrobot_amp_amass.yaml  ← Main config
+├── conf_wildrobot_amp_amass.yaml  ← Training config
 ├── experiment.py                  ← Training script
 ├── eval.py                        ← Evaluation script
 ├── setup_amass.sh                 ← Setup script

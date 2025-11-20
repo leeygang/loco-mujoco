@@ -5,6 +5,10 @@ defaults:
 wandb:
   project: "wildrobot-amp-amass"
 
+# Top-level learning rates (accessed by optimizer)
+lr: 3e-4
+disc_lr: 5e-5
+
 experiment:
   task_factory:
     name: ImitationFactory
@@ -60,6 +64,7 @@ experiment:
   max_grad_norm: 1.0
   activation: tanh
   anneal_lr: true
+  weight_decay: 0.0001
   normalize_env: true
   debug: false
   live_wandb: true
