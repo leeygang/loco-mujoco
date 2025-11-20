@@ -38,7 +38,7 @@ cd /Users/ygli/projects/loco-mujoco/examples/training_examples/training_amp
 
 This installs:
 - PyTorch CPU (avoids JAX conflicts)
-- SMPL dependencies (using `uv pip install`)
+- SMPL dependencies (using `uv sync --group smpl`)
 - Creates directories: `~/smpl`, `~/amass`, `~/amass_converted`
 
 ### Step 2: Download SMPL-H Models (10-15 min)
@@ -165,7 +165,7 @@ experiment:
       amass_dataset_conf:
         rel_dataset_path:
           - "KIT/3/walking_slow08_poses"
-          - "KIT/3/walking_fast01_poses"
+          - "KIT/3/walking_fast02_poses"
           - "KIT/10/running_fast01_poses"
           - "CMU/01/01_01_poses"          # Add CMU motions
           - "BMLrub/0007/walking1_poses"  # Add BMLrub

@@ -9,6 +9,9 @@ echo "WildRobot AMASS Setup"
 echo "=========================================="
 echo ""
 
+# Navigate to repo root
+cd "$(dirname "$0")/../../.."
+
 # Step 1: Install PyTorch CPU
 echo "Step 1/5: Installing PyTorch CPU..."
 uv pip install torch --extra-index-url https://download.pytorch.org/whl/cpu
@@ -19,7 +22,7 @@ echo "Step 2/5: Installing SMPL dependencies..."
 echo "⚠️  By continuing, you agree to the SMPL Software Copyright License"
 echo "   https://github.com/vchoutas/smplx"
 read -p "Press Enter to continue or Ctrl+C to cancel..."
-uv pip install -e '.[smpl]'
+uv sync --group smpl
 
 # Step 3: Create directories
 echo ""
