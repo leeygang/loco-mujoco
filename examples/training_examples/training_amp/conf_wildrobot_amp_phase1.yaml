@@ -19,13 +19,13 @@ experiment:
     headless: true
 
     # Goal and reward for AMP
-    goal_type: GoalTrajMimic
-    goal_params: {}
+    goal_type: GoalTrajRootVelocity
+    goal_params:
+      visualize_goal: false
 
-    reward_type: AMPReward
+    reward_type: TargetVelocityTrajReward
     reward_params:
-      task_reward_weight: 0.5
-      style_reward_weight: 0.5
+      w_exp: 10.0
 
     # Terminal state
     terminal_state_type: HeightBasedTerminalStateHandler
@@ -36,10 +36,14 @@ experiment:
   # Training hyperparameters
   hidden_layers: [256, 256]
   lr: 3e-4
+  disc_lr: 5e-5
   num_envs: 2048
   num_steps: 20
   total_timesteps: 3e6
   update_epochs: 4
+  disc_minibatch_size: 2048
+  proportion_env_reward: 0.5
+  n_disc_epochs: 50
   num_minibatches: 16
   gamma: 0.99
   gae_lambda: 0.95
@@ -47,6 +51,7 @@ experiment:
   init_std: 0.8
   learnable_std: true
   ent_coef: 0.01
+  disc_ent_coef: 0.0
   vf_coef: 0.5
   max_grad_norm: 1.0
   activation: tanh
@@ -57,6 +62,7 @@ experiment:
   live_wandb_interval: 10
   n_seeds: 1
   vmap_across_seeds: false
+  validation_interval: 10
   validation:
     active: true
     num_steps: 200
