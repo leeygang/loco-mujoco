@@ -101,3 +101,6 @@ experiment:
   vmap_across_seeds: true
   validation:
     active: false
+    num: 1                       # Required even when active=false
+    num_steps: 100
+    num_envs: 10
