@@ -1,0 +1,109 @@
+defaults:
+  - override hydra/job_logging: default
+  - override hydra/launcher: basic
+
+wandb:
+  project: "wildrobot-amp-custom"
+
+# Top-level learning rates (accessed by optimizer)
+lr: 3e-4
+disc_lr: 5e-5
+
+experiment:
+  task_factory:
+    name: ImitationFactory
+    params:
+      # Use custom WildRobot expert trajectories instead of AMASS
+      default_dataset_conf:
+        rel_dataset_path:
+          # These paths will be relative to your dataset storage location
+          # Generate these using generate_wildrobot_dataset.py first!
+          - "wildrobot_expert/wildrobot_walk_000"
+          - "wildrobot_expert/wildrobot_walk_001"
+          - "wildrobot_expert/wildrobot_walk_002"
+          - "wildrobot_expert/wildrobot_walk_003"
+          - "wildrobot_expert/wildrobot_walk_004"
+          - "wildrobot_expert/wildrobot_walk_005"
+          - "wildrobot_expert/wildrobot_walk_006"
+          - "wildrobot_expert/wildrobot_walk_007"
+          - "wildrobot_expert/wildrobot_walk_008"
+          - "wildrobot_expert/wildrobot_walk_009"
+          # Add more trajectories as needed
+
+  env_params:
+    env_name: MjxWildRobot
+    horizon: 600
+    headless: true
+
+    # Goal and reward for AMP
+    goal_type: GoalTrajRootVelocity
+    goal_params:
+      visualize_goal: false
+
+    reward_type: TargetVelocityTrajReward
+    reward_params:
+      w_exp: 10.0
+
+    # Terminal state
+    terminal_state_type: HeightBasedTerminalStateHandler
+    terminal_state_params:
+      min_height: 0.0
+      max_height: 2.0
+
+  # Training hyperparameters (optimized for custom robot data)
+  hidden_layers: [256, 256]
+  lr: 3e-4
+  disc_lr: 5e-5
+  num_envs: 2048
+  num_steps: 20
+  total_timesteps: 5e6  # Increased for better convergence
+  update_epochs: 4
+  disc_minibatch_size: 2048
+  proportion_env_reward: 0.5  # Balance between imitation and task reward
+  n_disc_epochs: 50
+  num_minibatches: 16
+  gamma: 0.99
+  gae_lambda: 0.95
+  clip_eps: 0.2
+  init_std: 0.8
+  learnable_std: true
+  ent_coef: 0.01
+  disc_ent_coef: 0.0
+  vf_coef: 0.5
+  max_grad_norm: 1.0
+  activation: tanh
+  anneal_lr: true
+  weight_decay: 0.0001
+  normalize_env: true
+  debug: false
+  live_wandb: true
+  live_wandb_interval: 10
+  n_seeds: 1
+  vmap_across_seeds: false
+  validation_interval: 10
+  validation:
+    active: true
+    num_steps: 200
+    num_envs: 10
+    num: 1
+    quantities:
+      - JointPosition
+      - JointVelocity
+      - RelSitePosition
+      - RelSiteVelocity
+      - RelSiteOrientation
+    measures:
+      - EuclideanDistance
+      - DynamicTimeWarping
+      - DiscreteFrechetDistance
+    rel_site_names:
+      - pelvis_mimic
+      - left_foot_mimic
+      - right_foot_mimic
+    joints_to_ignore:
+      - waist_freejoint_tx
+      - waist_freejoint_ty
+      - waist_freejoint_tz
+      - waist_freejoint_tilt
+      - waist_freejoint_list
+      - waist_freejoint_rotation
