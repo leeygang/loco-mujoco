@@ -518,7 +518,17 @@ class Mjx(Mujoco):
         if self._viewer is None:
             if "default_camera_mode" not in self._viewer_params.keys():
                 self._viewer_params["default_camera_mode"] = "static"
-            self._viewer = MujocoViewer(self._model, self.dt, record=record, **self._viewer_params)
+
+            # Filter viewer params to only include valid MujocoViewer arguments
+            valid_viewer_params = {
+                'viewer_size', 'start_paused', 'custom_render_callback',
+                'camera_params', 'default_camera_mode', 'hide_menu_on_startup',
+                'geom_group_visualization_on_startup', 'mimic_site_visualization_on_startup',
+                'headless', 'recorder_params'
+            }
+            filtered_params = {k: v for k, v in self._viewer_params.items() if k in valid_viewer_params}
+
+            self._viewer = MujocoViewer(self._model, self.dt, record=record, **filtered_params)
 
         if self._terrain.is_dynamic:
             terrain_state = state.additional_carry.terrain_state
@@ -543,7 +553,15 @@ class Mjx(Mujoco):
         assert len(trajectory) > 0, "Mjx render got provided with an empty trajectory."
 
         if self._viewer is None:
-            self._viewer = MujocoViewer(self._model, self.dt, record=record, **self._viewer_params)
+            # Filter viewer params to only include valid MujocoViewer arguments
+            valid_viewer_params = {
+                'viewer_size', 'start_paused', 'custom_render_callback',
+                'camera_params', 'default_camera_mode', 'hide_menu_on_startup',
+                'geom_group_visualization_on_startup', 'mimic_site_visualization_on_startup',
+                'headless', 'recorder_params'
+            }
+            filtered_params = {k: v for k, v in self._viewer_params.items() if k in valid_viewer_params}
+            self._viewer = MujocoViewer(self._model, self.dt, record=record, **filtered_params)
 
         n_envs = trajectory[0].data.qpos.shape[0]
 
