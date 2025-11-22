@@ -10,20 +10,19 @@ wandb:
   project: "wildrobot-humanlike-amp"
 
 experiment:
+  # Custom expert data path (converted from Step 1 HDF5 output)
+  custom_expert_path: "../jax_rl/wildrobot_expert_traj.npz"
+
   task_factory:
-    name: ImitationFactory
-    params:
-      # Point to Step 1 expert trajectories
-      default_dataset_conf:
-        rel_dataset_path:
-          - "wildrobot_expert_motions"
+    name: RLFactory  # Use RLFactory since we load trajectory manually
+    params: {}
 
   env_params:
     env_name: MjxWildRobot
     horizon: 600
     headless: true
 
-    # DEFAULT INITIALIZATION (no RSI)
+    # DEFAULT INITIALIZATION (no RSI - same as Step 1)
     initial_state_type: DefaultInitialStateHandler
     initial_state_params: {}
 

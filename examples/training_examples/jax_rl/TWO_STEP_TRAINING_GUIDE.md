@@ -77,6 +77,14 @@ python generate_wildrobot_dataset.py \
     --output_dir wildrobot_expert_motions
 ```
 
+**Convert HDF5 to npz format:**
+```bash
+cd examples/training_examples/jax_rl
+python convert_expert_data.py \
+    --input wildrobot_expert_motions/wildrobot_expert_dataset.h5 \
+    --output wildrobot_expert_traj.npz
+```
+
 ### Config
 Located in **`examples/training_examples/jax_amp/conf_wildrobot_step2.yaml`**
 

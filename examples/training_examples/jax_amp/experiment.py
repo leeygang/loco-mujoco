@@ -39,6 +39,13 @@ def experiment(config: DictConfig):
         # create env
         env = factory.make(**config.experiment.env_params, **config.experiment.task_factory.params)
 
+        # Load custom expert data if specified in config
+        if hasattr(config.experiment, 'custom_expert_path') and config.experiment.custom_expert_path:
+            print(f"Loading custom expert data from {config.experiment.custom_expert_path}")
+            expert_traj = Trajectory.load(config.experiment.custom_expert_path)
+            env.load_trajectory(expert_traj)
+            print(f"Loaded custom trajectory")
+
         # check if dataset file exists
         if not os.path.exists(expert_dataset_path):
             expert_dataset = env.create_dataset()
