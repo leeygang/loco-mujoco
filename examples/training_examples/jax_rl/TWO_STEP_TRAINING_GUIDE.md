@@ -49,7 +49,7 @@ Make the walking motion look more natural/human-like while maintaining forward p
 ### How AMP Handles Size Differences
 
 AMP uses a **discriminator** that learns to distinguish:
-- **Expert motion** (human or WildRobot reference)
+- **Expert motion** (WildRobot reference from Step 1)
 - **Policy motion** (current WildRobot behavior)
 
 The discriminator looks at **kinematic features**, not absolute positions:
@@ -62,30 +62,46 @@ The discriminator looks at **kinematic features**, not absolute positions:
 
 ### Data Pipeline
 
-**Option A: Use WildRobot Expert Data (RECOMMENDED)**
+**Using WildRobot Expert Data (from Step 1)**
 1. Take the trained policy from Step 1
-2. Generate 100+ episodes of WildRobot walking
+2. Generate 200 episodes of WildRobot walking
 3. Save as expert demonstrations
 4. Use for AMP discriminator training
 
 **Generate expert data:**
-```python
-# After Step 1 training completes
+```bash
 cd examples/training_examples/jax_rl
 python generate_wildrobot_dataset.py \
-    --policy_path outputs/.../PPOJax_saved.pkl \
+    --policy_path outputs/2025-11-22/11-19-29/PPOJax_saved.pkl \
     --num_episodes 200 \
-    --output_dir ../../datasets/wildrobot_walking/
+    --output_dir wildrobot_expert_motions
 ```
 
-**Option B: Use Retargeted Human Data (More Complex)**
-1. Retarget AMASS human walking to WildRobot skeleton
-2. Requires careful inverse kinematics
-3. Only use kinematic features (not absolute poses)
-4. Filter out features that don't transfer (absolute height, stride length)
-
 ### Config
-`conf_step2_humanlike_amp.yaml`
+Located in **`examples/training_examples/jax_amp/conf_wildrobot_step2.yaml`**
+
+Uses AMPJax algorithm with:
+- `proportion_env_reward: 0.5` → 50% task reward + 50% discriminator reward
+- Same LocomotionReward as Step 1
+- WildRobot expert dataset from Step 1
+
+### Run Training
+
+**Quick verification (2 minutes):**
+```bash
+cd examples/training_examples/jax_amp
+uv run experiment.py --config-name conf_wildrobot_step2 \
+  'experiment.total_timesteps=2e5' \
+  'experiment.num_envs=512' \
+  'experiment.live_wandb_interval=1' \
+  'wandb.project=wildrobot-step2-quickcheck'
+```
+
+**Full training (20-25 minutes):**
+```bash
+cd examples/training_examples/jax_amp
+uv run experiment.py --config-name conf_wildrobot_step2
+```
 
 ### Expected Results
 - Forward walking maintained (from Step 1)
