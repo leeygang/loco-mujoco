@@ -52,7 +52,7 @@
     },
     "joint_properties": {
         "default": {
-            "class": "lobotServo"
+            "class": "htd45hServo"
         }
     },
     "additional_xml": [
