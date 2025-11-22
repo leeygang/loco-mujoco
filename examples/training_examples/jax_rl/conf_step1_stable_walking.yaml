@@ -1,0 +1,105 @@
+# STEP 1: Stable Forward Walking (No Imitation)
+# Focus: Get the robot walking forward reliably first
+# NO human reference data - pure RL
+
+defaults:
+  - override hydra/job_logging: default
+  - override hydra/launcher: basic
+
+wandb:
+  project: "wildrobot-stable-forward-walking"
+
+# Top-level learning rate
+lr: 3e-4
+
+experiment:
+  task_factory:
+    name: RLFactory  # Pure RL, no trajectories
+    params: {}
+
+  env_params:
+    env_name: MjxWildRobot
+    horizon: 600
+    headless: true
+
+    # === DEFAULT INITIALIZATION (robot starts upright, facing forward) ===
+    initial_state_type: DefaultInitialStateHandler
+    initial_state_params: {}
+
+    # === FORWARD VELOCITY GOAL ===
+    goal_type: GoalForwardRootVelocity
+    goal_params:
+      visualize_goal: false
+      min_x_vel: 0.3     # Start conservative
+      max_x_vel: 0.8
+      min_y_vel: -0.1
+      max_y_vel: 0.1
+      min_yaw_vel: -0.2
+      max_yaw_vel: 0.2
+
+    # === BALANCED REWARD (not too aggressive) ===
+    reward_type: LocomotionReward
+    reward_params:
+      # Velocity tracking (moderate weights)
+      tracking_w_exp_xy: 15.0       # Moderate exponential
+      tracking_w_exp_yaw: 4.0
+      tracking_w_sum_xy: 5.0         # Moderate linear
+      tracking_w_sum_yaw: 1.0
+
+      # Stability (important for initial learning)
+      z_vel_coeff: 2.0               # Penalize vertical bobbing
+      roll_pitch_vel_coeff: 0.08     # Penalize tipping
+      roll_pitch_pos_coeff: 0.3      # Stay upright
+
+      # Smooth motion
+      nominal_joint_pos_coeff: 0.005
+      joint_position_limit_coeff: 5.0
+      joint_vel_coeff: 5e-5
+      joint_acc_coeff: 2e-5
+      joint_torque_coeff: 2e-7
+      action_rate_coeff: 0.02
+
+      # Gait pattern
+      air_time_max: 0.15
+      air_time_coeff: 0.15
+      symmetry_air_coeff: 0.08
+
+      # Energy
+      energy_coeff: 2e-5
+
+    # === Terminal conditions ===
+    terminal_state_type: HeightBasedTerminalStateHandler
+    terminal_state_params:
+      min_height: 0.2               # Fall if too low
+      max_height: 0.6               # Fall if jumping
+
+  # === FULL TRAINING PARAMETERS ===
+  hidden_layers: [512, 256, 128]
+  lr: 3e-4
+  num_envs: 2048
+  num_steps: 64
+  total_timesteps: 2e7             # 20 million steps
+  update_epochs: 4
+  num_minibatches: 32
+  gamma: 0.99
+  gae_lambda: 0.95
+  clip_eps: 0.2
+  init_std: 0.6
+  learnable_std: true
+  ent_coef: 0.01
+  vf_coef: 0.5
+  max_grad_norm: 0.5
+  activation: tanh
+  anneal_lr: true
+  weight_decay: 0.0
+  normalize_env: true
+  debug: false
+  live_wandb: true
+  live_wandb_interval: 5
+  n_seeds: 1
+  vmap_across_seeds: true
+  validation:
+    active: false
+    num: 1
+    num_steps: 100
+    num_envs: 10

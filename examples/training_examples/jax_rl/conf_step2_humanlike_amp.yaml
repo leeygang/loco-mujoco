@@ -1,0 +1,99 @@
+# STEP 2: Add Human-Like Motion (AFTER Step 1 works)
+# Approach: AMP (Adversarial Motion Priors) with WildRobot expert data
+# This handles size differences by learning STYLE, not exact poses
+
+defaults:
+  - override hydra/job_logging: default
+  - override hydra/launcher: basic
+
+wandb:
+  project: "wildrobot-humanlike-amp"
+
+# Top-level learning rates (AMP needs two: policy and discriminator)
+lr: 3e-4              # Policy learning rate
+disc_lr: 5e-5         # Discriminator learning rate
+
+experiment:
+  task_factory:
+    name: ImitationFactory
+    params:
+      # IMPORTANT: Use WildRobot trajectories, NOT human AMASS!
+      # First generate these using the trained policy from Step 1
+      default_dataset_conf:
+        rel_dataset_path:
+          - "wildrobot_walking_forward"  # You'll generate this from Step 1
+
+  env_params:
+    env_name: MjxWildRobot
+    horizon: 600
+    headless: true
+
+    # === DEFAULT INITIALIZATION (no RSI - avoid orientation bug) ===
+    initial_state_type: DefaultInitialStateHandler
+    initial_state_params: {}
+
+    # === FORWARD VELOCITY GOAL (same as Step 1) ===
+    goal_type: GoalForwardRootVelocity
+    goal_params:
+      visualize_goal: false
+      min_x_vel: 0.3
+      max_x_vel: 0.8
+      min_y_vel: -0.1
+      max_y_vel: 0.1
+      min_yaw_vel: -0.2
+      max_yaw_vel: 0.2
+
+    # === AMP REWARD (combines task reward + style reward) ===
+    reward_type: AMPReward
+    reward_params:
+      # Task reward weight (velocity tracking)
+      task_reward_weight: 0.5
+
+      # Style reward weight (discriminator)
+      style_reward_weight: 0.5
+
+      # Use same locomotion reward as Step 1
+      task_reward_type: LocomotionReward
+      task_reward_params:
+        tracking_w_exp_xy: 15.0
+        tracking_w_sum_xy: 5.0
+        z_vel_coeff: 2.0
+        roll_pitch_pos_coeff: 0.3
+        # ... (same as Step 1)
+
+    terminal_state_type: HeightBasedTerminalStateHandler
+    terminal_state_params:
+      min_height: 0.2
+      max_height: 0.6
+
+  # === TRAINING PARAMETERS ===
+  hidden_layers: [512, 256, 128]
+  lr: 3e-4
+  disc_lr: 5e-5              # Discriminator learning rate
+  num_envs: 2048
+  num_steps: 64
+  total_timesteps: 2e7
+  update_epochs: 4
+  num_minibatches: 32
+  gamma: 0.99
+  gae_lambda: 0.95
+  clip_eps: 0.2
+  init_std: 0.6
+  learnable_std: true
+  ent_coef: 0.01
+  vf_coef: 0.5
+  max_grad_norm: 0.5
+  activation: tanh
+  anneal_lr: true
+  weight_decay: 0.0
+  normalize_env: true
+  debug: false
+  live_wandb: true
+  live_wandb_interval: 5
+  n_seeds: 1
+  vmap_across_seeds: true
+  validation:
+    active: false
+    num: 1
+    num_steps: 100
+    num_envs: 10
