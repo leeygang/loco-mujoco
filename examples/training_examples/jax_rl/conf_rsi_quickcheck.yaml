@@ -9,6 +9,9 @@ defaults:
 wandb:
   project: "wildrobot-rsi-quickcheck"
 
+# Top-level learning rate (required for ImitationFactory)
+lr: 5e-5
+
 experiment:
   task_factory:
     name: ImitationFactory  # Load AMASS for poses
@@ -76,7 +79,7 @@ experiment:
 
   # === REDUCED TRAINING PARAMETERS FOR QUICK CHECK ===
   hidden_layers: [256, 128]        # Smaller network (was [512, 256, 128])
-  lr: 5e-5
+  lr: 5e-5                         # Learning rate (also at root level)
   num_envs: 512                    # Fewer envs (was 2048)
   num_steps: 64
   total_timesteps: 2e5             # 200K instead of 20M (~10 min vs 3-4 hrs)
@@ -101,3 +104,6 @@ experiment:
   vmap_across_seeds: true
   validation:
     active: false
+    num: 1                       # Required even when active=false
+    num_steps: 100
+    num_envs: 10

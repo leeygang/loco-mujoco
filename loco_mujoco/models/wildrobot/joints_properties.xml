@@ -1,8 +1,8 @@
 <default>
-    <default class="lobotServo">
-        <geom contype="0" conaffinity="0"/>
-        <joint damping="0.60" frictionloss="0.052" armature="0.028"/>
-        <position kp="17.8" kv="0.0" forcerange="-3.35 3.35"/>
+    <default class="htd45hServo">
+      <geom contype="0" conaffinity="0" />
+      <joint damping="0.08516" frictionloss="0.022275" armature="0.024992" />
+      <position kp="21.1" kv="0.5" forcerange="-4.0 4.0" />
     </default>
     <default class="backlash">
         <!-- +/- 0.5° of backlash -->
