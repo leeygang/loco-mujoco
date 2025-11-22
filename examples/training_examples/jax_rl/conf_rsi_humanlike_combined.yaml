@@ -33,46 +33,46 @@ experiment:
       sample_from_trajectory: true  # Sample random frames
       noise_std: 0.1                # Add noise to avoid exact copying
 
-    # === Standard RL goal (NOT trajectory tracking!) ===
+    # === Standard RL goal (HIGHER minimum velocity) ===
     goal_type: GoalForwardRootVelocity
     goal_params:
       visualize_goal: false
-      min_x_vel: 0.3     # Human walking speed
-      max_x_vel: 0.8
+      min_x_vel: 0.5     # Was 0.3 - force faster walking!
+      max_x_vel: 1.0     # Was 0.8 - allow faster speeds
       min_y_vel: -0.1
       max_y_vel: 0.1
       min_yaw_vel: -0.2
       max_yaw_vel: 0.2
 
-    # === FIXED REWARD: Velocity tracking >> penalties ===
+    # === ULTRA-AGGRESSIVE VELOCITY TRACKING (Force forward walking) ===
     reward_type: LocomotionReward
     reward_params:
-      # INCREASED velocity tracking weights (prevent backward walking)
-      tracking_w_exp_xy: 20.0       # Was 10.0 - doubled
-      tracking_w_exp_yaw: 4.0
-      tracking_w_sum_xy: 10.0       # Was 3.5 - tripled
-      tracking_w_sum_yaw: 1.0
+      # MASSIVELY INCREASED velocity tracking weights
+      tracking_w_exp_xy: 100.0      # Was 20.0 - increase 5x!
+      tracking_w_exp_yaw: 10.0       # Was 4.0
+      tracking_w_sum_xy: 50.0        # Was 10.0 - increase 5x!
+      tracking_w_sum_yaw: 2.0        # Was 1.0
 
-      # DECREASED penalty weights (reduce their influence)
-      z_vel_coeff: 1.0              # Was 3.0 - reduce bobbing penalty
-      roll_pitch_vel_coeff: 0.05    # Was 0.1 - reduce rotation penalty
-      roll_pitch_pos_coeff: 0.2     # Was 0.5 - reduce upright penalty
+      # MINIMIZE all penalties (make velocity tracking dominate completely)
+      z_vel_coeff: 0.3               # Was 1.0 - reduce 70%
+      roll_pitch_vel_coeff: 0.01     # Was 0.05 - reduce 80%
+      roll_pitch_pos_coeff: 0.05     # Was 0.2 - reduce 75%
 
-      # Smoothness (keep but reduce)
-      nominal_joint_pos_coeff: 0.005     # Was 0.01
-      joint_position_limit_coeff: 5.0    # Was 10.0
-      joint_vel_coeff: 5e-5              # Was 1e-4
-      joint_acc_coeff: 2e-5              # Was 5e-5
-      joint_torque_coeff: 2e-7           # Was 5e-7
-      action_rate_coeff: 0.02            # Was 0.05
+      # Smoothness (reduce to near-zero)
+      nominal_joint_pos_coeff: 0.001      # Was 0.005
+      joint_position_limit_coeff: 1.0     # Was 5.0
+      joint_vel_coeff: 1e-5               # Was 5e-5
+      joint_acc_coeff: 5e-6               # Was 2e-5
+      joint_torque_coeff: 1e-7            # Was 2e-7
+      action_rate_coeff: 0.005            # Was 0.02
 
-      # Gait pattern (keep these)
+      # Gait pattern (keep minimal)
       air_time_max: 0.15
-      air_time_coeff: 0.2
-      symmetry_air_coeff: 0.1
+      air_time_coeff: 0.05           # Was 0.2 - reduce
+      symmetry_air_coeff: 0.02       # Was 0.1 - reduce
 
-      # Energy (reduce penalty)
-      energy_coeff: 1e-5              # Was 2e-5
+      # Energy (minimal)
+      energy_coeff: 1e-6             # Was 1e-5
 
     # === Tighter terminal bounds (prevent crouching/jumping) ===
     terminal_state_type: HeightBasedTerminalStateHandler
