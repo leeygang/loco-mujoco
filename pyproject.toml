@@ -24,6 +24,7 @@ dependencies = [
     "pymeshlab",
     "huggingface_hub",
     "wandb>=0.22.2",
+    "h5py>=3.15.1",
 ]
 
 requires-python = ">=3.10"
