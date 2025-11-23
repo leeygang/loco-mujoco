@@ -10,11 +10,6 @@ fi
 # Get the filename from the first argument
 FILENAME="$1"
 
-# Check if file exists
-if [ ! -e "$FILENAME" ]; then
-    echo "Error: File '$FILENAME' does not exist"
-    exit 1
-fi
 
 # Remote destination
 REMOTE_USER="leeygang"
@@ -22,13 +17,8 @@ REMOTE_HOST="linux-pc.local"
 REMOTE_PATH="~/projects/loco-mujoco/examples/training_examples/jax_rl/"
 
 # Determine if it's a directory or file
-if [ -d "$FILENAME" ]; then
-    echo "Copying directory '$FILENAME' from $REMOTE_USER@$REMOTE_HOST:$REMOTE_PATH"
-    scp -r "$REMOTE_USER@$REMOTE_HOST:$REMOTE_PATH/$FILENAME" .
-else
     echo "Copying file '$FILENAME' from $REMOTE_USER@$REMOTE_HOST:$REMOTE_PATH"
-    scp  "$REMOTE_USER@$REMOTE_HOST:$REMOTE_PATH/$FILENAME" .
-fi
+    scp -r "$REMOTE_USER@$REMOTE_HOST:$REMOTE_PATH$FILENAME" .
 
 # Check if scp was successful
 if [ $? -eq 0 ]; then
