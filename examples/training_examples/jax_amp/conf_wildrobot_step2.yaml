@@ -76,17 +76,17 @@ experiment:
   # === AMP-SPECIFIC PARAMETERS ===
   proportion_env_reward: 0.5      # 50% task reward, 50% discriminator reward
   disc_lr: 5e-5                   # Discriminator learning rate
-  disc_minibatch_size: 2048       # Discriminator batch size
+  disc_minibatch_size: 1024       # Discriminator batch size (reduced for 12GB GPU)
   n_disc_epochs: 50               # Discriminator update epochs
 
   # === TRAINING PARAMETERS ===
   hidden_layers: [512, 256, 128]
   lr: 3e-4                        # Policy learning rate
-  num_envs: 2048
+  num_envs: 1024                  # Reduced for 12GB GPU (was 2048)
   num_steps: 64
   total_timesteps: 2e7
   update_epochs: 4
-  num_minibatches: 32
+  num_minibatches: 16             # Reduced to match smaller num_envs
   gamma: 0.99
   gae_lambda: 0.95
   clip_eps: 0.2
