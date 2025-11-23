@@ -36,6 +36,19 @@ def main():
                         help='Random seed')
     parser.add_argument('--format', type=str, choices=['hdf5', 'npz', 'both'], default='hdf5',
                         help='Output format')
+    # Velocity goal parameters
+    parser.add_argument('--min_x_vel', type=float, default=0.3,
+                        help='Minimum forward velocity (m/s)')
+    parser.add_argument('--max_x_vel', type=float, default=0.8,
+                        help='Maximum forward velocity (m/s)')
+    parser.add_argument('--min_y_vel', type=float, default=-0.1,
+                        help='Minimum lateral velocity (m/s)')
+    parser.add_argument('--max_y_vel', type=float, default=0.1,
+                        help='Maximum lateral velocity (m/s)')
+    parser.add_argument('--min_yaw_vel', type=float, default=-0.2,
+                        help='Minimum yaw velocity (rad/s)')
+    parser.add_argument('--max_yaw_vel', type=float, default=0.2,
+                        help='Maximum yaw velocity (rad/s)')
     args = parser.parse_args()
 
     # ========== LOAD AGENT ==========
@@ -65,6 +78,7 @@ def main():
 
     # ========== CREATE ENVIRONMENT ==========
     print("Creating environment...")
+    print(f"  Using velocity goals: x=[{args.min_x_vel}, {args.max_x_vel}] m/s")
     env = RLFactory.make(
         "MjxWildRobot",
         horizon=600,
@@ -92,12 +106,12 @@ def main():
         goal_type="GoalForwardRootVelocity",
         goal_params={
             "visualize_goal": False,
-            "min_x_vel": 0.3,
-            "max_x_vel": 0.8,
-            "min_y_vel": -0.1,
-            "max_y_vel": 0.1,
-            "min_yaw_vel": -0.2,
-            "max_yaw_vel": 0.2,
+            "min_x_vel": args.min_x_vel,
+            "max_x_vel": args.max_x_vel,
+            "min_y_vel": args.min_y_vel,
+            "max_y_vel": args.max_y_vel,
+            "min_yaw_vel": args.min_yaw_vel,
+            "max_yaw_vel": args.max_yaw_vel,
         },
         terminal_state_type="HeightBasedTerminalStateHandler",
         terminal_state_params={

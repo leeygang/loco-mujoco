@@ -107,8 +107,12 @@ def main():
 
     # Create temporary environment to get obs_container and compute forward kinematics
     print(f"Creating temporary {args.env_name} environment...")
+
+    # Use CPU version (WildRobot, not MjxWildRobot) for data processing
+    cpu_env_name = args.env_name.replace("Mjx", "")  # MjxWildRobot -> WildRobot
+
     env = RLFactory.make(
-        args.env_name,
+        cpu_env_name,
         horizon=600,
         headless=True,
         reward_type="LocomotionReward",
