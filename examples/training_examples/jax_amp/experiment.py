@@ -129,10 +129,15 @@ def experiment(config: DictConfig):
         print(f"Time taken to log metrics: {time.time() - t_start}s")
 
         # run the environment with the trained agent to record video
-        AMPJax.play_policy(env, agent_conf, agent_state, deterministic=True, n_steps=200, n_envs=20, record=True,
-                           train_state_seed=0)
-        video_file = env.video_file_path
-        run.log({"Agent Video": wandb.Video(video_file)})
+        try:
+            AMPJax.play_policy(env, agent_conf, agent_state, deterministic=True, n_steps=200, n_envs=20, record=True,
+                               train_state_seed=0)
+            video_file = env.video_file_path
+            run.log({"Agent Video": wandb.Video(video_file)})
+            print("Video recording successful")
+        except Exception as e:
+            print(f"Warning: Video recording failed (likely running on headless server): {e}")
+            print("Training completed successfully. Video recording skipped.")
 
         wandb.finish()
 
