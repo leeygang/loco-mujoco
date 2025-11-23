@@ -77,7 +77,11 @@ experiment:
   proportion_env_reward: 0.3      # 30% task reward, 70% discriminator reward (increased style weight)
   disc_lr: 5e-5                   # Discriminator learning rate
   disc_minibatch_size: 1024       # Discriminator batch size (reduced for 12GB GPU)
+<<<<<<< HEAD
   n_disc_epochs: 15               # Discriminator update epochs (reduced from 50 - prevent overfitting)
+=======
+  n_disc_epochs: 50               # Discriminator update epochs
+>>>>>>> 54c7226de2bd13bb86c254e907feff44edce23cd
 
   # === TRAINING PARAMETERS ===
   hidden_layers: [512, 256, 128]
