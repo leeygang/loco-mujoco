@@ -28,10 +28,15 @@ def experiment(config: DictConfig):
         # Accessing the current sweep number
         result_dir = hydra.core.hydra_config.HydraConfig.get().runtime.output_dir
 
-        # setup wandb
-        wandb.login()
-        config_dict = OmegaConf.to_container(config, resolve=True, throw_on_missing=True)
-        run = wandb.init(project=config.wandb.project, config=config_dict)
+        # setup wandb - only if not disabled
+        use_wandb = config.experiment.get('use_wandb', True)  # Default to True for backwards compatibility
+        if use_wandb:
+            wandb.login()
+            config_dict = OmegaConf.to_container(config, resolve=True, throw_on_missing=True)
+            run = wandb.init(project=config.wandb.project, config=config_dict)
+        else:
+            run = None
+            print("WandB disabled - training will proceed without logging to WandB")
 
         # get task factory
         factory = TaskFactory.get_factory_cls(config.experiment.task_factory.name)
@@ -80,12 +85,13 @@ def experiment(config: DictConfig):
         # save agent state
         agent_state = out["agent_state"]
         save_path = AMPJax.save_agent(result_dir, agent_conf, agent_state)
-        run.config.update({"agent_save_path": save_path})
+        if use_wandb:
+            run.config.update({"agent_save_path": save_path})
 
         import time
         t_start = time.time()
         # get the metrics and log them
-        if not config.experiment.debug:
+        if not config.experiment.debug and use_wandb:
             training_metrics = out["training_metrics"]
             validation_metrics = out["validation_metrics"]
 
@@ -126,20 +132,22 @@ def experiment(config: DictConfig):
                     run.log({"Metric for Sweep": site_rpos + site_rrotvec + site_rvel},
                             step=int(training_metrics.max_timestep[i]))
 
-        print(f"Time taken to log metrics: {time.time() - t_start}s")
+            print(f"Time taken to log metrics: {time.time() - t_start}s")
 
         # run the environment with the trained agent to record video
         try:
             AMPJax.play_policy(env, agent_conf, agent_state, deterministic=True, n_steps=200, n_envs=20, record=True,
                                train_state_seed=0)
             video_file = env.video_file_path
-            run.log({"Agent Video": wandb.Video(video_file)})
+            if use_wandb:
+                run.log({"Agent Video": wandb.Video(video_file)})
             print("Video recording successful")
         except Exception as e:
             print(f"Warning: Video recording failed (likely running on headless server): {e}")
             print("Training completed successfully. Video recording skipped.")
 
-        wandb.finish()
+        if use_wandb:
+            wandb.finish()
 
     except Exception:
         traceback.print_exc(file=sys.stderr)

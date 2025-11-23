@@ -23,6 +23,9 @@ wandb:
   project: "wildrobot-amp-amass"
 
 experiment:
+  # WandB control
+  use_wandb: true              # Set to false to completely disable WandB
+
   task_factory:
     name: ImitationFactory
     params:
