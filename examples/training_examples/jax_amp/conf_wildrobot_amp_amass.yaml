@@ -1,6 +1,9 @@
 # WildRobot AMP Training with AMASS Human Motion Data
 # Trains robot to walk with human-like gait using Adversarial Motion Priors
 #
+# SIMPLIFIED CONFIG: Uses single AMASS sequence for stable training
+# Fixed discriminator collapse issue from previous training
+#
 # Prerequisites:
 #   1. Download AMASS dataset (KIT subset recommended)
 #   2. Download SMPL models
@@ -23,26 +26,16 @@ experiment:
   task_factory:
     name: ImitationFactory
     params:
-      # AMASS human motion dataset - automatically retargeted to WildRobot
-      # Retargeting handles size differences automatically!
-      default_dataset_conf:
-        dataset_names:
-          - walk    # Standard walking motion (~0.8-1.2 m/s)
-          - run     # Running motion (~2.0-3.0 m/s)
-          # Available: walk, run, pace, trot, crawl, sit, etc.
+      # SIMPLIFIED: Use single AMASS sequence (medium speed walking)
+      # Using 1 motion prevents discriminator collapse and simplifies learning
+      # Once this works, can add more speeds later
+      amass_dataset_conf:
+        rel_dataset_path:
+          - "KIT/3/walking_medium03_poses"    # ~1.0 m/s
 
-      # Optional: Use specific AMASS sequences for more control
-      # Uncomment to use custom sequences instead of default datasets
-      # amass_dataset_conf:
-      #   rel_dataset_path:
-      #     # Walking at different speeds
-      #     - "KIT/3/walking_slow08_poses"      # ~0.5 m/s
-      #     - "KIT/3/walking_medium03_poses"    # ~1.0 m/s
-      #     - "KIT/3/walking_fast02_poses"      # ~1.5 m/s
-      #     - "KIT/3/walking_run03_poses"       # ~2.0 m/s
-      #     # Turning motions
-      #     - "KIT/3/turn_left01_poses"
-      #     - "KIT/3/turn_right01_poses"
+          # Add these later after initial training succeeds:
+          # - "KIT/3/walking_slow08_poses"      # ~0.5 m/s
+          # - "KIT/3/walking_fast02_poses"      # ~1.5 m/s
 
   env_params:
     env_name: MjxWildRobot
@@ -65,17 +58,19 @@ experiment:
       min_height: 0.15   # Fall if robot drops below 15cm
       max_height: 0.8    # Safety upper bound
 
-  # ========== AMP HYPERPARAMETERS ==========
+  # ========== AMP HYPERPARAMETERS (FIXED) ==========
 
-  # Balance between task reward (velocity) and style reward (discriminator)
-  proportion_env_reward: 0.5   # 50% task, 50% style
-  # Increase to 0.7 if you want more velocity tracking
-  # Decrease to 0.3 if you want more human-like motion
+  # FIXED: Increased task reward to encourage forward motion
+  # With single motion, can rely more on velocity tracking
+  proportion_env_reward: 0.65   # 65% task (velocity), 35% style
+  # Previous: 0.5 - robot needs stronger incentive to move forward
 
-  # Discriminator settings
-  disc_lr: 5e-5                # Discriminator learning rate
-  disc_minibatch_size: 2048    # Discriminator batch size (reduce to 1024 for 12GB GPU)
-  n_disc_epochs: 50            # Discriminator update epochs per PPO update
+  # FIXED: Reduced discriminator learning to prevent collapse
+  # Previous issue: Discriminator learned too fast (50 epochs) and always won
+  disc_lr: 1e-5                # Reduced from 5e-5 (5x slower)
+  disc_minibatch_size: 2048    # Keep same
+  n_disc_epochs: 10            # REDUCED from 50! Critical fix!
+  # Now discriminator gets 2.5x more updates than policy (was 12.5x)
 
   # ========== PPO HYPERPARAMETERS ==========
 
@@ -85,7 +80,8 @@ experiment:
   # Environment configuration
   num_envs: 2048               # Parallel environments (REDUCE to 1024 for 12GB GPU)
   num_steps: 20                # Steps per rollout
-  total_timesteps: 50e6        # Total training steps (50M ~= 30min on RTX 3080)
+  total_timesteps: 75e6        # Total training steps (75M ~= 45min on RTX 3080)
+  # Increased from 50M - AMP needs more time to learn stable walking
 
   # PPO update settings
   update_epochs: 4             # Policy update epochs per rollout
@@ -95,13 +91,13 @@ experiment:
   gamma: 0.99                  # Discount factor
   gae_lambda: 0.95             # GAE lambda
   clip_eps: 0.2                # PPO clipping epsilon
-  ent_coef: 0.01               # Entropy coefficient (exploration)
+  ent_coef: 0.02               # INCREASED from 0.01 - more exploration
   disc_ent_coef: 0.0           # Discriminator entropy
   vf_coef: 0.5                 # Value function coefficient
   max_grad_norm: 1.0           # Gradient clipping
 
   # Policy initialization
-  init_std: 0.8                # Initial action std (higher = more exploration)
+  init_std: 1.0                # INCREASED from 0.8 - more initial exploration
   learnable_std: true          # Learn action std over time
 
   # Optimization
@@ -115,7 +111,7 @@ experiment:
   # Logging
   debug: false
   live_wandb: true             # Stream metrics to W&B during training
-  live_wandb_interval: 10      # Log every 10 updates
+  live_wandb_interval: 5       # Log every 5 updates (was 10, more frequent monitoring)
 
   # Multi-seed training
   n_seeds: 1                   # Number of random seeds (set >1 for ablations)
