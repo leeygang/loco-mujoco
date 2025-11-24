@@ -450,6 +450,27 @@ class GAILJax(JaxRLAlgorithmBase):
                 max_timestep=jnp.max(logged_metrics.timestep * config.num_envs),
             )
 
+            # Live WandB logging callback
+            if getattr(config, "live_wandb", False):
+                def _wandb_log_train(m, c):
+                    try:
+                        import wandb
+                        import numpy as np
+                        step = int(np.asarray(m.max_timestep))
+                        interval = int(getattr(config, "live_wandb_interval", 1))
+                        if int(np.asarray(c)) % max(1, interval) != 0:
+                            return
+                        wandb.log({
+                            "Mean Episode Return": float(np.asarray(m.mean_episode_return)),
+                            "Mean Episode Length": float(np.asarray(m.mean_episode_length)),
+                            "Discriminator/Output Policy": float(np.asarray(m.discriminator_output_policy)),
+                            "Discriminator/Output Expert": float(np.asarray(m.discriminator_output_expert)),
+                        }, step=step)
+                    except Exception:
+                        pass
+
+                jax.debug.callback(_wandb_log_train, metric, counter)
+
             def _evaluation_step():
 
                 def _eval_env(runner_state, unused):
